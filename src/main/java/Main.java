@@ -10,78 +10,52 @@ public class Main {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
-        System.out.println("ID DE CADA COMPONENTE");
-        String sqlSelect = "SELECT * FROM componentes";
-        List<Componente> capturas = template.query(sqlSelect, new BeanPropertyRowMapper<>(Componente.class));
-        for (Componente c : capturas) {
-            System.out.println(c.getIdComponente());
-        }
-
-        template.execute(sqlSelect);
-
-        System.out.println("LENDO O CSV");
-
         leImportaArquivoCsv("captura_total.csv");
     }
 
     public static void leImportaArquivoCsv (String nomeArq) {
+        DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
+        JdbcTemplate template = databaseConfiguration.getTemplate();
+
+        System.out.println("Pegando informações de hostname, limite do componente de cada componente...");
+        String sqlSelect = "select s.hostname, c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'LucasRodrigues'";
+        List<ServidorComponente> capturas = template.query(sqlSelect, new BeanPropertyRowMapper<>(ServidorComponente.class));
+
+
         Reader arq = null;
         BufferedReader entrada = null;
+        BufferedWriter saida = null;
+
         List<Captura> listaLida = new ArrayList<>();
 
         // Bloco try-catch para abrir o arquivo
         try {
             arq = new InputStreamReader(new FileInputStream(nomeArq), "UTF-8");
+            saida = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream("saida.csv"), "UTF-8"));
+
             entrada = new BufferedReader(arq);
         } catch (IOException erro) {
             System.out.println("Erro na abertura do arquivo");
             System.exit(1);
         }
 
+        System.out.println("Lendo o csv e escrevendo a saída");
+
         try {
             String[] registro;      // registro eh um vetor que armazenara cada parte da linha do arquivo
             // readLine() eh usado   para ler uma linha inteira do arquivo
             // Le a primeira linha do arquivo, que eh o cabecalho
             String linha = entrada.readLine(); // linha eh a primeira linha do arquivo
+            String cabecalho = linha + ",alertaCpu,alertaRam,alertaDisco";
+            saida.write(cabecalho);
+            saida.newLine();
 
             // separa cada item da linha usando o delimitador ;
             registro = linha.split(",");
-            // printa os títulos das colunas
-            System.out.printf(
-                    "%-15s %-20s %-10s %-6s %-6s %-6s %-10s %-15s %-15s %-10s %-15s %-15s %-10s %-15s %-15s %-15s %-15s %-15s %-10s %-10s %-10s %-20s %-8s %-25s %-12s %-12s %-8s %-15s %-15s %-15s %-20s %-10s\n",
-                    registro[0],  // Nome da Maquina
-                    registro[1],  // Data da Coleta
-                    registro[2],  // Uso de CPU
-                    registro[3],  // Load1
-                    registro[4],  // Load5
-                    registro[5],  // Load15
-                    registro[6],  // Usogit stat de RAM
-                    registro[7],  // RAM total (bytes)
-                    registro[8],  // RAM usada (bytes)
-                    registro[9],  // Uso de Swap
-                    registro[10], // Swap total (bytes)
-                    registro[11], // Swap usada (bytes)
-                    registro[12], // Uso de Disco
-                    registro[13], // Disco total (bytes)
-                    registro[14], // Disco usado (bytes)
-                    registro[15], // Disco livre (bytes)
-                    registro[16], // Net bytes enviados
-                    registro[17], // Net bytes recebidos
-                    registro[18], // Freq CPU (MHz)
-                    registro[19], // Temp CPU (C)
-                    registro[20], // Uptime (s)
-                    registro[21], // Processo
-                    registro[22], // PID
-                    registro[23], // Usuario
-                    registro[24], // CPU proc (%)
-                    registro[25], // MEM proc (%)
-                    registro[26], // Threads
-                    registro[27], // RSS (bytes)
-                    registro[28], // IO Leitura (bytes)
-                    registro[29], // IO Escrita (bytes)
-                    registro[30], // Quando foi iniciado
-                    registro[31]  // Status
-            );
 
             // Le a segunda linha do arquivo (1a linha de dados)
             linha = entrada.readLine();
@@ -124,32 +98,28 @@ public class Main {
                 String status = registro[31];
 
 
-// Cria o objeto Captura usando a ordem de argumentos da classe
-                Captura captura = new Captura(
-                        nomeDaMaquina, dataDaColeta, usoCPU, load1, load5, load15,
-                        usoRAM, ramTotal, ramUsada, usoSwap, swapTotal, swapUsada,
-                        usoDisco, discoTotal, discoUsado, discoLivre,
-                        netBytesEnviados, netBytesRecebidos, freqCPU, tempCPU, uptime,
-                        processo, pid, usuario, cpuProc, memProc, threads, rss,
-                        ioLeitura, ioEscrita, quandoFoiIniciado, status
-                );
+                String alertaCpu = "não";
+                String alertaRam = "não";
+                String alertaDisco = "não";
 
-                // Adiciona o objeto criado na listaLida
-                // Dessa forma, estamos "importando" os dados lidos do arquivo
-                // Pode-se trabalhar com os dados na lista ou salvar o conteuda da lista
-                // em um Banco de dados se for necessario
-                listaLida.add(captura);
 
-                // Exibe os dados lidos
-                System.out.printf(
-                        "%-19s %-10s %6.2f%% CPU %6.2f%% RAM %6.2f%% Disco\n",
-                        nomeDaMaquina,
-                        dataDaColeta,
-                        usoCPU,
-                        usoRAM,
-                        usoDisco
-                );
+                for (ServidorComponente c : capturas) {
+                    String tipoComponente = c.getNome();
+                    Double limite = c.getLimite();
 
+                    if(tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite){
+                        alertaCpu = "sim";
+                    } else if(tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite){
+                        alertaRam = "sim";
+                    } else if(tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite){
+                        alertaDisco = "sim";
+                    }
+
+                }
+                // escreve a linha de dados + alertas
+                String novaLinha = linha + "," + alertaCpu + "," + alertaRam + "," + alertaDisco;
+                saida.write(novaLinha);
+                saida.newLine();
 
                 // Le a proxima linha do arquivo
                 linha = entrada.readLine();
@@ -166,6 +136,8 @@ public class Main {
                 System.out.println("Erro ao fechar o arquivo");
             }
         }
+
+        System.out.println("Processo finalizado");
 
     }
 
