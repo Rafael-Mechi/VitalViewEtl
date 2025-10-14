@@ -205,39 +205,28 @@ public class Main {
             Double primeiroRegistroRam = Double.valueOf(registro[6]);
             Double primeiroRegistroDisco = Double.valueOf(registro[12]);
 
-            Boolean podeRegistrarCpu = true;
-            Boolean podeRegistrarRam = true;
-            Boolean podeRegistrarDisco = true;
+            Boolean podeRegistrarCpu = false;
+            Boolean podeRegistrarRam = false;
+            Boolean podeRegistrarDisco = false;
+
+            Integer contCpu = 0;
+            Integer contRam = 0;
+            Integer contDisco = 0;
 
 
             // verificando se o uso de cpu da primeira linha ultrapassa o limite
             if(primeiroRegistroCpu > limiteCpu){
-                podeRegistrarCpu = false;
-                String dataHoraColeta = registro[1];
-
-                String sqlInsertAlertaCpu = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                        "(?, ?, ?)";
-                template.update(sqlInsertAlertaCpu, dataHoraColeta, primeiroRegistroCpu,  1);
+                contCpu++;
             }
 
             // ram...
             if(primeiroRegistroRam > limiteRam){
-                podeRegistrarRam = false;
-                String dataHoraColeta = registro[1];
-
-                String sqlInsertAlertaCpu = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                        "(?, ?, ?)";
-                template.update(sqlInsertAlertaCpu, dataHoraColeta, primeiroRegistroRam,  2);
+                contRam++;
             }
 
             // disco...
             if(primeiroRegistroDisco > limiteDisco){
-                podeRegistrarDisco = false;
-                String dataHoraColeta = registro[1];
-
-                String sqlInsertAlertaCpu = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                        "(?, ?, ?)";
-                template.update(sqlInsertAlertaCpu, dataHoraColeta, primeiroRegistroDisco,  3);
+                contDisco++;
             }
 
             while (linha != null) { // enquanto nao chegou ao final do arquivo
@@ -251,14 +240,38 @@ public class Main {
                 Double usoDisco = Double.valueOf(registro[12]);
 
                 if(usoCPU < limiteCpu){
-                    podeRegistrarCpu = true;
+                    contCpu = 0;
+                }
+
+                else{
+                    contCpu++;
                 }
 
                 if(usoRAM < limiteRam){
-                    podeRegistrarRam = true;
+                    contRam = 0;
+                }
+
+                else{
+                    contRam++;
                 }
 
                 if(usoDisco < limiteDisco){
+                    contDisco = 0;
+                }
+
+                else{
+                    contDisco ++;
+                }
+
+                if(contCpu == 3){
+                    podeRegistrarCpu = true;
+                }
+
+                if(contRam == 3){
+                    podeRegistrarRam = true;
+                }
+
+                if(contDisco == 3){
                     podeRegistrarDisco = true;
                 }
 
@@ -279,7 +292,7 @@ public class Main {
                     String tipoComponente = sc.getNome();
                     Double limite = sc.getLimite();
 
-                    if(tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite && podeRegistrarRam){
+                    if(tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite && podeRegistrarRam && contRam >= 3){
                         String sqlInsertAlertaRam = "insert into alerta (data_alerta, registro, fkComponente) values" +
                                 "(?, ?, ?)";
                         template.update(sqlInsertAlertaRam, dataHoraColeta, usoRAM, 2);
@@ -292,7 +305,7 @@ public class Main {
                     String tipoComponente = sc.getNome();
                     Double limite = sc.getLimite();
 
-                    if(tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite && podeRegistrarDisco){
+                    if(tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite && podeRegistrarDisco && contDisco >= 3){
                         String sqlInsertAlertaDisco = "insert into alerta (data_alerta, registro, fkComponente) values" +
                                 "(?, ?, ?)";
                         template.update(sqlInsertAlertaDisco, dataHoraColeta, usoDisco, 3);
