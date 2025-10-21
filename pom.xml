@@ -37,7 +37,6 @@
             <artifactId>commons-dbcp2</artifactId>
 
             <version>2.12.0</version>
-
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
@@ -47,6 +46,18 @@
             <version>8.0.33</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.slack.api</groupId>
+            <artifactId>slack-api-client</artifactId>
+            <version>1.29.0</version> <!-- Verifique a versão mais recente -->
+        </dependency>
+
+        <!-- SLF4J API -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version> <!-- ou a versão que você já estiver usando -->
+        </dependency>
 
     </dependencies>
 

@@ -5,10 +5,24 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+//importações slack
+import com.slack.api.Slack;
+import com.slack.api.methods.SlackApiException;
+import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.methods.response.chat.ChatPostMessageResponse;
+import com.slack.api.SlackConfig;
+
+
+import java.io.IOException;
+
 public class Alerta {
     private LocalDateTime dataAlerta;
     private Integer registro;
     private Integer fkComponente;
+
+    //Variaveis slack
+    private static final String SLACK_TOKEN = "";
+    private static final String CHANNEL = "#suporte-slack";
 
     public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {
         this.dataAlerta = dataAlerta;
@@ -16,7 +30,8 @@ public class Alerta {
         this.fkComponente = fkComponente;
     }
 
-    public Alerta(){}
+    public Alerta() {
+    }
 
     public LocalDateTime getDataAlerta() {
         return dataAlerta;
@@ -42,7 +57,7 @@ public class Alerta {
         this.fkComponente = fkComponente;
     }
 
-    public void salvaTabelaAlerta(String nomeArq){
+    public void salvaTabelaAlerta(String nomeArq) {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
@@ -116,17 +131,17 @@ public class Alerta {
 
 
             // verificando se o uso de cpu da primeira linha ultrapassa o limite
-            if(primeiroRegistroCpu > limiteCpu){
+            if (primeiroRegistroCpu > limiteCpu) {
                 contCpu++;
             }
 
             // ram...
-            if(primeiroRegistroRam > limiteRam){
+            if (primeiroRegistroRam > limiteRam) {
                 contRam++;
             }
 
             // disco...
-            if(primeiroRegistroDisco > limiteDisco){
+            if (primeiroRegistroDisco > limiteDisco) {
                 contDisco++;
             }
 
@@ -140,39 +155,33 @@ public class Alerta {
                 Double usoRAM = Double.valueOf(registro[6]);
                 Double usoDisco = Double.valueOf(registro[12]);
 
-                if(usoCPU < limiteCpu){
+                if (usoCPU < limiteCpu) {
                     contCpu = 0;
-                }
-
-                else{
+                } else {
                     contCpu++;
                 }
 
-                if(usoRAM < limiteRam){
+                if (usoRAM < limiteRam) {
                     contRam = 0;
-                }
-
-                else{
+                } else {
                     contRam++;
                 }
 
-                if(usoDisco < limiteDisco){
+                if (usoDisco < limiteDisco) {
                     contDisco = 0;
+                } else {
+                    contDisco++;
                 }
 
-                else{
-                    contDisco ++;
-                }
-
-                if(contCpu == 3){
+                if (contCpu == 3) {
                     podeRegistrarCpu = true;
                 }
 
-                if(contRam == 3){
+                if (contRam == 3) {
                     podeRegistrarRam = true;
                 }
 
-                if(contDisco == 3){
+                if (contDisco == 3) {
                     podeRegistrarDisco = true;
                 }
 
@@ -180,11 +189,13 @@ public class Alerta {
                     String tipoComponente = sc.getNome();
                     Double limite = sc.getLimite();
 
-                    if(tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite && podeRegistrarCpu){
+                    if (tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite && podeRegistrarCpu) {
                         String sqlInsertAlertaCpu = "insert into alerta (data_alerta, registro, fkComponente) values" +
                                 "(?, ?, ?)";
                         template.update(sqlInsertAlertaCpu, dataHoraColeta, usoCPU, 1);
                         podeRegistrarCpu = false;
+
+                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
                     }
 
                 }
@@ -193,11 +204,13 @@ public class Alerta {
                     String tipoComponente = sc.getNome();
                     Double limite = sc.getLimite();
 
-                    if(tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite && podeRegistrarRam && contRam >= 3){
+                    if (tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite && podeRegistrarRam && contRam >= 3) {
                         String sqlInsertAlertaRam = "insert into alerta (data_alerta, registro, fkComponente) values" +
                                 "(?, ?, ?)";
                         template.update(sqlInsertAlertaRam, dataHoraColeta, usoRAM, 2);
                         podeRegistrarRam = false;
+
+                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
                     }
 
                 }
@@ -206,11 +219,13 @@ public class Alerta {
                     String tipoComponente = sc.getNome();
                     Double limite = sc.getLimite();
 
-                    if(tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite && podeRegistrarDisco && contDisco >= 3){
+                    if (tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite && podeRegistrarDisco && contDisco >= 3) {
                         String sqlInsertAlertaDisco = "insert into alerta (data_alerta, registro, fkComponente) values" +
                                 "(?, ?, ?)";
                         template.update(sqlInsertAlertaDisco, dataHoraColeta, usoDisco, 3);
                         podeRegistrarDisco = false;
+
+                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
                     }
 
                 }
@@ -230,4 +245,38 @@ public class Alerta {
             }
         }
     }
+
+        public static void enviarAlertaSlack ( double cpuPercent, double memPercent, double diskPercent, String
+        timestamp, String hostname, Double limiteCpu, Double limiteRam, Double limiteDisco){
+
+            if (cpuPercent > limiteCpu || memPercent > limiteRam || diskPercent > limiteDisco) {
+                String alerta = String.format(
+                        "⚠️ *Alerta de uso elevado detectado!*\n" +
+                                "🕒 %s\n" +
+                                "👤 Servidor: %s\n" +
+                                "💻 CPU: %.2f%%\n" +
+                                "🧠 RAM: %.2f%%\n" +
+                                "💾 Disco: %.2f%%",
+                        timestamp, hostname, cpuPercent, memPercent, diskPercent
+                );
+
+                // Cria uma configuração personalizada sem listeners
+                Slack slack = Slack.getInstance();
+
+                try {
+                    ChatPostMessageResponse response = slack.methods(SLACK_TOKEN).chatPostMessage(ChatPostMessageRequest.builder()
+                            .channel(CHANNEL)
+                            .text(alerta)
+                            .build());
+
+                    if (response.isOk()) {
+                        System.out.println("Alerta enviado para o Slack.");
+                    } else {
+                        System.out.println("Erro ao enviar alerta: " + response.getError());
+                    }
+                } catch (IOException | SlackApiException e) {
+                    System.out.println("Exceção ao enviar alerta: " + e.getMessage());
+                }
+            }
+        };
 }
