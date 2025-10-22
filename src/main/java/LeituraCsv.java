@@ -366,18 +366,18 @@ public class LeituraCsv {
             // readLine() eh usado   para ler uma linha inteira do arquivo
             // Le a primeira linha do arquivo, que eh o cabecalho
             String linha = entrada.readLine(); // linha eh a primeira linha do arquivo
-            String cabecalho = linha + ",alertaCpu,alertaRam,alertaDisco";
+            String cabecalho = linha + ";alertaCpu;alertaRam;alertaDisco";
             saida.write(cabecalho);
             saida.newLine();
 
             // separa cada item da linha usando o delimitador ;
-            registro = linha.split(",");
+            registro = linha.split(";");
 
             // Le a segunda linha do arquivo (1a linha de dados)
             linha = entrada.readLine();
 
             while (linha != null) { // enquanto nao chegou ao final do arquivo
-                registro = linha.split(",");
+                registro = linha.split(";");
                 // converte de String para Integer usando Integer.valueOf
                 // Se fosse converter de String para int usa-se Integer.parseInt
                 String nomeDaMaquina = registro[0];
@@ -433,7 +433,7 @@ public class LeituraCsv {
 
                 }
                 // escreve a linha de dados + alertas
-                String novaLinha = linha + "," + alertaCpu + "," + alertaRam + "," + alertaDisco;
+                String novaLinha = linha + ";" + alertaCpu + ";" + alertaRam + ";" + alertaDisco;
                 saida.write(novaLinha);
                 saida.newLine();
 

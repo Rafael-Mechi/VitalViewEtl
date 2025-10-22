@@ -109,13 +109,13 @@ public class Alerta {
             String linha = entrada.readLine(); // linha eh a primeira linha do arquivo
 
             // separa cada item da linha usando o delimitador ;
-            registro = linha.split(",");
+            registro = linha.split(";");
 
             String cabecalho = linha;
 
             // Le a segunda linha do arquivo (1a linha de dados)
             linha = entrada.readLine();
-            registro = linha.split(",");
+            registro = linha.split(";");
 
             Double primeiroRegistroCpu = Double.valueOf(registro[2]);
             Double primeiroRegistroRam = Double.valueOf(registro[6]);
@@ -146,7 +146,7 @@ public class Alerta {
             }
 
             while (linha != null) { // enquanto nao chegou ao final do arquivo
-                registro = linha.split(",");
+                registro = linha.split(";");
                 // converte de String para Integer usando Integer.valueOf
                 // Se fosse converter de String para int usa-se Integer.parseInt
                 String nomeDaMaquina = registro[0];
