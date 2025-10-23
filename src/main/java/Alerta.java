@@ -87,12 +87,9 @@ public class Alerta {
 
         Reader arq = null;
         BufferedReader entrada = null;
-        BufferedWriter saida = null;
         // Bloco try-catch para abrir o arquivo
         try {
             arq = new InputStreamReader(new FileInputStream(nomeArq), "UTF-8");
-            saida = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream("saida.csv"), "UTF-8"));
 
             entrada = new BufferedReader(arq);
         } catch (IOException erro) {
@@ -110,8 +107,6 @@ public class Alerta {
 
             // separa cada item da linha usando o delimitador ;
             registro = linha.split(";");
-
-            String cabecalho = linha;
 
             // Le a segunda linha do arquivo (1a linha de dados)
             linha = entrada.readLine();

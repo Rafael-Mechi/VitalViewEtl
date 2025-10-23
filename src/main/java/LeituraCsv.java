@@ -401,17 +401,6 @@ public class LeituraCsv {
                 Double freqCPU = Double.valueOf(registro[18]);
                 Double tempCPU = Double.valueOf(registro[19]);
                 Long uptime = Long.valueOf(registro[20]);
-                String processo = registro[21];
-                Integer pid = Integer.valueOf(registro[22]);
-                String usuario = registro[23];
-                Double cpuProc = Double.valueOf(registro[24]);
-                Double memProc = Double.valueOf(registro[25]);
-                Integer threads = Integer.valueOf(registro[26]);
-                Long rss = Long.valueOf(registro[27]);
-                Long ioLeitura = Long.valueOf(registro[28]);
-                Long ioEscrita = Long.valueOf(registro[29]);
-                String quandoFoiIniciado = registro[30];
-                String status = registro[31];
 
 
                 String alertaCpu = "não";
@@ -448,6 +437,7 @@ public class LeituraCsv {
             try {
                 entrada.close();
                 arq.close();
+                saida.close();
             } catch (IOException erro) {
                 System.out.println("Erro ao fechar o arquivo");
             }

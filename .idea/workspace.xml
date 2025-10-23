@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="" />
+    <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/captura_srv1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/captura_srv1.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saida.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Alerta.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Alerta.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/DatabaseConfiguration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/DatabaseConfiguration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/Alerta.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Alerta.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/DatabaseConfiguration.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/DatabaseConfiguration.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/LeituraCsv.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/LeituraCsv.class" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -35,7 +45,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/rr658/Downloads/Documentos VitalView/Apresentação-VitalView/Etl"
+    "last_opened_file_path": "/home/meki/IdeaProjects/VitalViewEtl"
   }
 }]]></component>
   <component name="TaskManager">
@@ -47,5 +57,16 @@
       <updated>1760411650387</updated>
     </task>
     <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/Alerta.java</url>
+          <line>112</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
