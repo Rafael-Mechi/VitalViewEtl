@@ -1,8 +1,10 @@
+import okhttp3.*;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.*;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 
 //importações slack
@@ -10,9 +12,11 @@ import com.slack.api.Slack;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
-import com.slack.api.SlackConfig;
 
-
+//imports jira
+import okhttp3.*;
+import java.io.IOException;
+import java.util.Base64;
 import java.io.IOException;
 
 public class Alerta {
@@ -23,6 +27,8 @@ public class Alerta {
     //Variaveis slack
     private static final String SLACK_TOKEN = "";
     private static final String CHANNEL = "#suporte-slack";
+
+
 
     public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {
         this.dataAlerta = dataAlerta;
@@ -191,6 +197,9 @@ public class Alerta {
                         podeRegistrarCpu = false;
 
                         enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta CPU: " + usoCPU + "%";
+                        abrirChamadoJira(msgJira);
                     }
 
                 }
@@ -206,6 +215,9 @@ public class Alerta {
                         podeRegistrarRam = false;
 
                         enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta RAM: " + usoRAM + "%";
+                        abrirChamadoJira(msgJira);
                     }
 
                 }
@@ -221,6 +233,9 @@ public class Alerta {
                         podeRegistrarDisco = false;
 
                         enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta DISCO: " + usoDisco + "%";
+                        abrirChamadoJira(msgJira);
                     }
 
                 }
@@ -241,37 +256,91 @@ public class Alerta {
         }
     }
 
-        public static void enviarAlertaSlack ( double cpuPercent, double memPercent, double diskPercent, String
-        timestamp, String hostname, Double limiteCpu, Double limiteRam, Double limiteDisco){
+    public static void enviarAlertaSlack(double cpuPercent, double memPercent, double diskPercent, String
+            timestamp, String hostname, Double limiteCpu, Double limiteRam, Double limiteDisco) {
 
-            if (cpuPercent > limiteCpu || memPercent > limiteRam || diskPercent > limiteDisco) {
-                String alerta = String.format(
-                        "⚠️ *Alerta de uso elevado detectado!*\n" +
-                                "🕒 %s\n" +
-                                "👤 Servidor: %s\n" +
-                                "💻 CPU: %.2f%%\n" +
-                                "🧠 RAM: %.2f%%\n" +
-                                "💾 Disco: %.2f%%",
-                        timestamp, hostname, cpuPercent, memPercent, diskPercent
-                );
+        if (cpuPercent > limiteCpu || memPercent > limiteRam || diskPercent > limiteDisco) {
+            String alerta = String.format(
+                    "⚠️ *Alerta de uso elevado detectado!*\n" +
+                            "🕒 %s\n" +
+                            "👤 Servidor: %s\n" +
+                            "💻 CPU: %.2f%%\n" +
+                            "🧠 RAM: %.2f%%\n" +
+                            "💾 Disco: %.2f%%",
+                    timestamp, hostname, cpuPercent, memPercent, diskPercent
+            );
 
-                // Cria uma configuração personalizada sem listeners
-                Slack slack = Slack.getInstance();
+            // Cria uma configuração personalizada sem listeners
+            Slack slack = Slack.getInstance();
 
-                try {
-                    ChatPostMessageResponse response = slack.methods(SLACK_TOKEN).chatPostMessage(ChatPostMessageRequest.builder()
-                            .channel(CHANNEL)
-                            .text(alerta)
-                            .build());
+            try {
+                ChatPostMessageResponse response = slack.methods(SLACK_TOKEN).chatPostMessage(ChatPostMessageRequest.builder()
+                        .channel(CHANNEL)
+                        .text(alerta)
+                        .build());
 
-                    if (response.isOk()) {
-                        System.out.println("Alerta enviado para o Slack.");
-                    } else {
-                        System.out.println("Erro ao enviar alerta: " + response.getError());
-                    }
-                } catch (IOException | SlackApiException e) {
-                    System.out.println("Exceção ao enviar alerta: " + e.getMessage());
+                if (response.isOk()) {
+                    System.out.println("Alerta enviado para o Slack.");
+                } else {
+                    System.out.println("Erro ao enviar alerta: " + response.getError());
                 }
+            } catch (IOException | SlackApiException e) {
+                System.out.println("Exceção ao enviar alerta: " + e.getMessage());
             }
-        };
+        }
+    }
+
+    public void abrirChamadoJira(String msgJira) {
+        String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";
+        String email = "vitalview.sptech@gmail.com";
+        String apiToken = "Coloque o token do jira aqui";
+
+
+        String credentials = email + ":" + apiToken;
+        String basicAuth = "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+
+        String json = String.format("""
+                {
+                  "fields": {
+                    "project": { "key": "SUP" },
+                    "summary": "%s",
+                    "description": {
+                      "type": "doc",
+                      "version": 1,
+                      "content": [
+                        {
+                          "type": "paragraph",
+                          "content": [
+                            {
+                              "text": "%s",
+                              "type": "text"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "issuetype": { "name": "Reportar um Incidente" }
+                  }
+                }
+                """, msgJira, msgJira);
+
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(json, MediaType.parse("application/json"));
+        Request request = new Request.Builder()
+                .url(jiraUrl)
+                .addHeader("Authorization", basicAuth)
+                .addHeader("Accept", "application/json")
+                .post(body)
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            System.out.println("Status: " + response.code());
+            System.out.println("Body: " + response.body().string());
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+
+
 }
