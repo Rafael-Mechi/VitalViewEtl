@@ -1,8 +1,13 @@
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.io.FileReader;
+import java.io.FileWriter;
 
 import java.io.*;
 import java.util.List;
@@ -452,26 +457,48 @@ public class LeituraCsv {
     }
 
     public void converterParaJson() {
-        try {
-            CSVReader reader = new CSVReader(new FileReader("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.csv"));
-            String[] headers = reader.readNext(); // primeira linha como cabeçalhos
+        try (CSVReader reader = new CSVReaderBuilder(new FileReader("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.csv"))
+                .withCSVParser(new CSVParserBuilder().withSeparator(';').build())
+                .build();) {
+            // Lê a primeira linha como cabeçalho
+            String[] headers = reader.readNext();
+
+            if (headers == null) {
+                System.out.println("Arquivo CSV vazio ou inválido.");
+                return;
+            }
 
             JSONArray jsonArray = new JSONArray();
             String[] line;
+
+            //Lê cada linha e transforma em JSONObject
             while ((line = reader.readNext()) != null) {
                 JSONObject obj = new JSONObject();
-                for (int i = 0; i < headers.length; i++) {
-                    obj.put(headers[i], line[i]);
+
+                for (int i = 0; i < headers.length && i < line.length; i++) {
+                    String chave = headers[i].trim();
+                    String valor = line[i].trim();
+
+                    // tenta converter números automaticamente
+                    if (valor.matches("^-?\\d+(\\.\\d+)?$")) {
+                        // valor numérico
+                        obj.put(chave, Double.parseDouble(valor));
+                    } else if (valor.equalsIgnoreCase("true") || valor.equalsIgnoreCase("false")) {
+                        // valor booleano
+                        obj.put(chave, Boolean.parseBoolean(valor));
+                    } else {
+                        // valor texto
+                        obj.put(chave, valor);
+                    }
                 }
+
                 jsonArray.put(obj);
             }
-            reader.close();
 
-            // Grava o JSON em um arquivo
-            FileWriter file = new FileWriter("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.json");
-            file.write(jsonArray.toString(2)); // com indentação
-            file.flush();
-            file.close();
+            // Salva o JSON com indentação bonita
+            try (FileWriter file = new FileWriter("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.json")) {
+                file.write(jsonArray.toString(2)); // 2 = indentação
+            }
 
             System.out.println("Arquivo JSON gerado com sucesso!");
 

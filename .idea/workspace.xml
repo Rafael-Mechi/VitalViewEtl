@@ -5,15 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/saida.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/saida.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/captura_srv2.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/captura_total.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saida.json" beforeDir="false" afterPath="$PROJECT_DIR$/saida.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Alerta.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Alerta.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/LeituraCsv.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/LeituraCsv.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Main.class" afterDir="false" />
     </list>
