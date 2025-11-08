@@ -1,3 +1,6 @@
+import com.opencsv.CSVReader;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -38,7 +41,8 @@ public class LeituraCsv {
     private String quandoFoiIniciado;
     private String status;
 
-    public LeituraCsv(){}
+    public LeituraCsv() {
+    }
 
     public LeituraCsv(String nomeDaMaquina, String dataDaColeta, Double usoDeCPU, Double load1, Double load5, Double load15, Double usoDeRAM, Long ramTotal, Long ramUsada, Double usoDeSwap, Long swapTotal, Long swapUsada, Double usoDeDisco, Long discoTotal, Long discoUsado, Long discoLivre, Long netBytesEnviados, Long netBytesRecebidos, Double freqCPU, Double tempCPU, Long uptime, String processo, Integer pid, String usuario, Double cpuProc, Double memProc, Integer threads, Long rss, Long ioLeitura, Long ioEscrita, String quandoFoiIniciado, String status) {
         this.nomeDaMaquina = nomeDaMaquina;
@@ -331,7 +335,7 @@ public class LeituraCsv {
         this.status = status;
     }
 
-    public void leImportaArquivoCsv (String nomeArq) {
+    public void leImportaArquivoCsv(String nomeArq) {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
@@ -412,11 +416,11 @@ public class LeituraCsv {
                     String tipoComponente = c.getNome();
                     Double limite = c.getLimite();
 
-                    if(tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite){
+                    if (tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite) {
                         alertaCpu = "sim";
-                    } else if(tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite){
+                    } else if (tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite) {
                         alertaRam = "sim";
-                    } else if(tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite){
+                    } else if (tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite) {
                         alertaDisco = "sim";
                     }
 
@@ -445,5 +449,34 @@ public class LeituraCsv {
 
         System.out.println("Processo finalizado");
 
+    }
+
+    public void converterParaJson() {
+        try {
+            CSVReader reader = new CSVReader(new FileReader("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.csv"));
+            String[] headers = reader.readNext(); // primeira linha como cabeçalhos
+
+            JSONArray jsonArray = new JSONArray();
+            String[] line;
+            while ((line = reader.readNext()) != null) {
+                JSONObject obj = new JSONObject();
+                for (int i = 0; i < headers.length; i++) {
+                    obj.put(headers[i], line[i]);
+                }
+                jsonArray.put(obj);
+            }
+            reader.close();
+
+            // Grava o JSON em um arquivo
+            FileWriter file = new FileWriter("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.json");
+            file.write(jsonArray.toString(2)); // com indentação
+            file.flush();
+            file.close();
+
+            System.out.println("Arquivo JSON gerado com sucesso!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -5,15 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/saida.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/saida.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/captura_srv1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/captura_srv1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/saida.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Alerta.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Alerta.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/DatabaseConfiguration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/DatabaseConfiguration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/captura_srv2.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/captura_total.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/Alerta.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Alerta.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/DatabaseConfiguration.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/DatabaseConfiguration.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/LeituraCsv.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/LeituraCsv.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Main.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,16 +40,16 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/meki/IdeaProjects/VitalViewEtl"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/meki/IdeaProjects/VitalViewEtl&quot;
   }
-}]]></component>
+}</component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="" />
@@ -57,16 +59,5 @@
       <updated>1760411650387</updated>
     </task>
     <servers />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/Alerta.java</url>
-          <line>112</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

@@ -2,6 +2,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 public class Main {
     public static void main(String[] args) {
+
+        //OBS: (Antes de rodar arrume as config do bd, coloque os tokens do jira, slack)
+
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
@@ -10,5 +13,6 @@ public class Main {
 
         leituraCsv.leImportaArquivoCsv("captura_srv1.csv");
         alerta.salvaTabelaAlerta("captura_srv1.csv");
+        leituraCsv.converterParaJson();
     }
 }
