@@ -8,11 +8,15 @@ public class Main {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
-        Alerta alerta = new Alerta();
-        LeituraCsv leituraCsv = new LeituraCsv();
+//        Alerta alerta = new Alerta();
+//        LeituraCsv leituraCsv = new LeituraCsv();
 
         //leituraCsv.leImportaArquivoCsv("captura_srv1.csv");
         //alerta.salvaTabelaAlerta("captura_srv1.csv");
-        leituraCsv.converterParaJson();
+        //leituraCsv.converterParaJson();
+
+        ControleSistema cs = new ControleSistema();
+
+        cs.calcularProdutividade();
     }
 }
