@@ -26,9 +26,13 @@ public class LeituraCsv {
     private Long swapTotal;
     private Long swapUsada;
     private Double usoDeDisco;
-    private Long discoTotal;
-    private Long discoUsado;
-    private Long discoLivre;
+    private Double discoTotal;
+    private Double discoUsado;
+    private Double discoLivre;
+    private Double taxaLeitura;
+    private Double taxaEscrita;
+    private Double latenciaLeitura;
+    private Double latenciaEscrita;
     private Long netBytesEnviados;
     private Long netBytesRecebidos;
     private Double freqCPU;
@@ -49,7 +53,7 @@ public class LeituraCsv {
     public LeituraCsv() {
     }
 
-    public LeituraCsv(String nomeDaMaquina, String dataDaColeta, Double usoDeCPU, Double load1, Double load5, Double load15, Double usoDeRAM, Long ramTotal, Long ramUsada, Double usoDeSwap, Long swapTotal, Long swapUsada, Double usoDeDisco, Long discoTotal, Long discoUsado, Long discoLivre, Long netBytesEnviados, Long netBytesRecebidos, Double freqCPU, Double tempCPU, Long uptime, String processo, Integer pid, String usuario, Double cpuProc, Double memProc, Integer threads, Long rss, Long ioLeitura, Long ioEscrita, String quandoFoiIniciado, String status) {
+    public LeituraCsv(String nomeDaMaquina, String dataDaColeta, Double usoDeCPU, Double load1, Double load5, Double load15, Double usoDeRAM, Long ramTotal, Long ramUsada, Double usoDeSwap, Long swapTotal, Long swapUsada, Double usoDeDisco, Double discoTotal, Double discoUsado, Double discoLivre, Double taxaLeitura, Double taxaEscrita, Double latenciaLeitura, Double latenciaEscrita, Long netBytesEnviados, Long netBytesRecebidos, Double freqCPU, Double tempCPU, Long uptime, String processo, Integer pid, String usuario, Double cpuProc, Double memProc, Integer threads, Long rss, Long ioLeitura, Long ioEscrita, String quandoFoiIniciado, String status) {
         this.nomeDaMaquina = nomeDaMaquina;
         this.dataDaColeta = dataDaColeta;
         this.usoDeCPU = usoDeCPU;
@@ -66,6 +70,10 @@ public class LeituraCsv {
         this.discoTotal = discoTotal;
         this.discoUsado = discoUsado;
         this.discoLivre = discoLivre;
+        this.taxaLeitura = taxaLeitura;
+        this.taxaEscrita = taxaEscrita;
+        this.latenciaLeitura = latenciaLeitura;
+        this.latenciaEscrita = latenciaEscrita;
         this.netBytesEnviados = netBytesEnviados;
         this.netBytesRecebidos = netBytesRecebidos;
         this.freqCPU = freqCPU;
@@ -188,28 +196,60 @@ public class LeituraCsv {
         this.usoDeDisco = usoDeDisco;
     }
 
-    public Long getDiscoTotal() {
+    public Double getDiscoTotal() {
         return discoTotal;
     }
 
-    public void setDiscoTotal(Long discoTotal) {
+    public void setDiscoTotal(Double discoTotal) {
         this.discoTotal = discoTotal;
     }
 
-    public Long getDiscoUsado() {
+    public Double getDiscoUsado() {
         return discoUsado;
     }
 
-    public void setDiscoUsado(Long discoUsado) {
+    public void setDiscoUsado(Double discoUsado) {
         this.discoUsado = discoUsado;
     }
 
-    public Long getDiscoLivre() {
+    public Double getDiscoLivre() {
         return discoLivre;
     }
 
-    public void setDiscoLivre(Long discoLivre) {
+    public void setDiscoLivre(Double discoLivre) {
         this.discoLivre = discoLivre;
+    }
+
+    public Double getTaxaLeitura() {
+        return taxaLeitura;
+    }
+
+    public void setTaxaLeitura(Double taxaLeitura) {
+        this.taxaLeitura = taxaLeitura;
+    }
+
+    public Double getTaxaEscrita() {
+        return taxaEscrita;
+    }
+
+    public void setTaxaEscrita(Double taxaEscrita) {
+        this.taxaEscrita = taxaEscrita;
+    }
+
+    public Double getLatenciaLeitura() {
+        return latenciaLeitura;
+    }
+
+    public void setLatenciaLeitura(Double latenciaLeitura) {
+        this.latenciaLeitura = latenciaLeitura;
+    }
+
+    public Double getLatenciaEscrita() {
+        return latenciaEscrita;
+    }
+
+    public void setLatenciaEscrita(Double latenciaEscrita) {
+        this.latenciaEscrita = latenciaEscrita;
     }
 
     public Long getNetBytesEnviados() {
@@ -402,14 +442,18 @@ public class LeituraCsv {
                 Long swapTotal = Long.valueOf(registro[10]);
                 Long swapUsada = Long.valueOf(registro[11]);
                 Double usoDisco = Double.valueOf(registro[12]);
-                Long discoTotal = Long.valueOf(registro[13]);
-                Long discoUsado = Long.valueOf(registro[14]);
-                Long discoLivre = Long.valueOf(registro[15]);
-                Long netBytesEnviados = Long.valueOf(registro[16]);
-                Long netBytesRecebidos = Long.valueOf(registro[17]);
-                Double freqCPU = Double.valueOf(registro[18]);
-                Double tempCPU = Double.valueOf(registro[19]);
-                Long uptime = Long.valueOf(registro[20]);
+                Double discoTotal = Double.valueOf(registro[13]);
+                Double discoUsado = Double.valueOf(registro[14]);
+                Double discoLivre = Double.valueOf(registro[15]);
+                Double taxaLeitura = Double.valueOf(registro[16]);
+                Double taxaEscrita = Double.valueOf(registro[17]);
+                Double latenciaLeitura = Double.valueOf(registro[18]);
+                Double latenciaEscrita = Double.valueOf(registro[19]);
+                Long netBytesEnviados = Long.valueOf(registro[20]);
+                Long netBytesRecebidos = Long.valueOf(registro[21]);
+                Double freqCPU = Double.valueOf(registro[22]);
+                Double tempCPU = Double.valueOf(registro[23]);
+                Long uptime = Long.valueOf(registro[24]);
 
 
                 String alertaCpu = "não";
