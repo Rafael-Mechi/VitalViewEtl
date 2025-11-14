@@ -8,25 +8,24 @@ import java.util.Base64;
 import java.util.List;
 
 //importações slack
-import com.slack.api.Slack;
-import com.slack.api.methods.SlackApiException;
-import com.slack.api.methods.request.chat.ChatPostMessageRequest;
-import com.slack.api.methods.response.chat.ChatPostMessageResponse;
+//import com.slack.api.Slack;
+//import com.slack.api.methods.SlackApiException;
+//import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+//import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 
 //imports jira
-import okhttp3.*;
 import java.io.IOException;
-import java.util.Base64;
-import java.io.IOException;
+//import java.util.Base64;
+//import java.io.IOException;
 
 public class Alerta {
     private LocalDateTime dataAlerta;
     private Integer registro;
     private Integer fkComponente;
 
-    //Variaveis slack
-    private static final String SLACK_TOKEN = "";
-    private static final String CHANNEL = "#suporte-slack";
+//    //Variaveis slack
+//    private static final String SLACK_TOKEN = "";
+//    private static final String CHANNEL = "#suporte-slack";
 
 
 
@@ -196,7 +195,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaCpu, dataHoraColeta, usoCPU, 1);
                         podeRegistrarCpu = false;
 
-                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
 
                         String msgJira = "Alerta CPU: " + usoCPU + "%";
                         abrirChamadoJira(msgJira);
@@ -214,7 +213,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaRam, dataHoraColeta, usoRAM, 2);
                         podeRegistrarRam = false;
 
-                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
 
                         String msgJira = "Alerta RAM: " + usoRAM + "%";
                         abrirChamadoJira(msgJira);
@@ -232,7 +231,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaDisco, dataHoraColeta, usoDisco, 3);
                         podeRegistrarDisco = false;
 
-                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
 
                         String msgJira = "Alerta DISCO: " + usoDisco + "%";
                         abrirChamadoJira(msgJira);
@@ -256,39 +255,41 @@ public class Alerta {
         }
     }
 
-    public static void enviarAlertaSlack(double cpuPercent, double memPercent, double diskPercent, String
-            timestamp, String hostname, Double limiteCpu, Double limiteRam, Double limiteDisco) {
+    //Não utilizaremos mais essa função
 
-        if (cpuPercent > limiteCpu || memPercent > limiteRam || diskPercent > limiteDisco) {
-            String alerta = String.format(
-                    "⚠️ *Alerta de uso elevado detectado!*\n" +
-                            "🕒 %s\n" +
-                            "👤 Servidor: %s\n" +
-                            "💻 CPU: %.2f%%\n" +
-                            "🧠 RAM: %.2f%%\n" +
-                            "💾 Disco: %.2f%%",
-                    timestamp, hostname, cpuPercent, memPercent, diskPercent
-            );
-
-            // Cria uma configuração personalizada sem listeners
-            Slack slack = Slack.getInstance();
-
-            try {
-                ChatPostMessageResponse response = slack.methods(SLACK_TOKEN).chatPostMessage(ChatPostMessageRequest.builder()
-                        .channel(CHANNEL)
-                        .text(alerta)
-                        .build());
-
-                if (response.isOk()) {
-                    System.out.println("Alerta enviado para o Slack.");
-                } else {
-                    System.out.println("Erro ao enviar alerta: " + response.getError());
-                }
-            } catch (IOException | SlackApiException e) {
-                System.out.println("Exceção ao enviar alerta: " + e.getMessage());
-            }
-        }
-    }
+//    public static void enviarAlertaSlack(double cpuPercent, double memPercent, double diskPercent, String
+//            timestamp, String hostname, Double limiteCpu, Double limiteRam, Double limiteDisco) {
+//
+//        if (cpuPercent > limiteCpu || memPercent > limiteRam || diskPercent > limiteDisco) {
+//            String alerta = String.format(
+//                    "⚠️ *Alerta de uso elevado detectado!*\n" +
+//                            "🕒 %s\n" +
+//                            "👤 Servidor: %s\n" +
+//                            "💻 CPU: %.2f%%\n" +
+//                            "🧠 RAM: %.2f%%\n" +
+//                            "💾 Disco: %.2f%%",
+//                    timestamp, hostname, cpuPercent, memPercent, diskPercent
+//            );
+//
+//            // Cria uma configuração personalizada sem listeners
+//            Slack slack = Slack.getInstance();
+//
+//            try {
+//                ChatPostMessageResponse response = slack.methods(SLACK_TOKEN).chatPostMessage(ChatPostMessageRequest.builder()
+//                        .channel(CHANNEL)
+//                        .text(alerta)
+//                        .build());
+//
+//                if (response.isOk()) {
+//                    System.out.println("Alerta enviado para o Slack.");
+//                } else {
+//                    System.out.println("Erro ao enviar alerta: " + response.getError());
+//                }
+//            } catch (IOException | SlackApiException e) {
+//                System.out.println("Exceção ao enviar alerta: " + e.getMessage());
+//            }
+//        }
+//    }
 
     public void abrirChamadoJira(String msgJira) {
         String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";

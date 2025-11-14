@@ -3,17 +3,17 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class Main {
     public static void main(String[] args) {
 
-        //OBS: (Antes de rodar arrume as config do bd, coloque os tokens do jira, slack)
+        //OBS: (Antes de rodar arrume as config do bd, coloque o tokens do jira)
 
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
-//        Alerta alerta = new Alerta();
-//        LeituraCsv leituraCsv = new LeituraCsv();
+        Alerta alerta = new Alerta();
+        LeituraCsv leituraCsv = new LeituraCsv();
 
-        //leituraCsv.leImportaArquivoCsv("captura_srv1.csv");
+        leituraCsv.leImportaArquivoCsv("captura_principal.csv");
         //alerta.salvaTabelaAlerta("captura_srv1.csv");
-        //leituraCsv.converterParaJson();
+        leituraCsv.converterParaJson();
 
         ControleSistema cs = new ControleSistema();
 

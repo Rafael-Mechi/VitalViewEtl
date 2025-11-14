@@ -46,19 +46,6 @@
             <version>8.0.33</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.slack.api</groupId>
-            <artifactId>slack-api-client</artifactId>
-            <version>1.29.0</version> <!-- Verifique a versão mais recente -->
-        </dependency>
-
-        <!-- SLF4J API -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.9</version> <!-- ou a versão que você já estiver usando -->
-        </dependency>
-
         <!--csv -> json-->
         <dependency>
             <groupId>com.opencsv</groupId>
@@ -71,6 +58,13 @@
             <artifactId>json</artifactId>
             <version>20240303</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version>
+        </dependency>
+
 
     </dependencies>
 
