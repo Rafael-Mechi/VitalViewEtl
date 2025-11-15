@@ -1,406 +1,101 @@
-import com.opencsv.CSVParserBuilder;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import okhttp3.*;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-
 import java.io.*;
+import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 
-public class LeituraCsv {
-    private String nomeDaMaquina;
-    private String dataDaColeta;
-    private Double usoDeCPU;
-    private Double load1;
-    private Double load5;
-    private Double load15;
-    private Double usoDeRAM;
-    private Long ramTotal;
-    private Long ramUsada;
-    private Double usoDeSwap;
-    private Long swapTotal;
-    private Long swapUsada;
-    private Double usoDeDisco;
-    private Double discoTotal;
-    private Double discoUsado;
-    private Double discoLivre;
-    private Double taxaLeitura;
-    private Double taxaEscrita;
-    private Double latenciaLeitura;
-    private Double latenciaEscrita;
-    private Long netBytesEnviados;
-    private Long netBytesRecebidos;
-    private Double freqCPU;
-    private Double tempCPU;
-    private Long uptime;
-    private String processo;
-    private Integer pid;
-    private String usuario;
-    private Double cpuProc;
-    private Double memProc;
-    private Integer threads;
-    private Long rss;
-    private Long ioLeitura;
-    private Long ioEscrita;
-    private String quandoFoiIniciado;
-    private String status;
+//importações slack
+import com.slack.api.Slack;
+import com.slack.api.methods.SlackApiException;
+import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 
-    public LeituraCsv() {
-    }
-
-    public LeituraCsv(String nomeDaMaquina, String dataDaColeta, Double usoDeCPU, Double load1, Double load5, Double load15, Double usoDeRAM, Long ramTotal, Long ramUsada, Double usoDeSwap, Long swapTotal, Long swapUsada, Double usoDeDisco, Double discoTotal, Double discoUsado, Double discoLivre, Double taxaLeitura, Double taxaEscrita, Double latenciaLeitura, Double latenciaEscrita, Long netBytesEnviados, Long netBytesRecebidos, Double freqCPU, Double tempCPU, Long uptime, String processo, Integer pid, String usuario, Double cpuProc, Double memProc, Integer threads, Long rss, Long ioLeitura, Long ioEscrita, String quandoFoiIniciado, String status) {
-        this.nomeDaMaquina = nomeDaMaquina;
-        this.dataDaColeta = dataDaColeta;
-        this.usoDeCPU = usoDeCPU;
-        this.load1 = load1;
-        this.load5 = load5;
-        this.load15 = load15;
-        this.usoDeRAM = usoDeRAM;
-        this.ramTotal = ramTotal;
-        this.ramUsada = ramUsada;
-        this.usoDeSwap = usoDeSwap;
-        this.swapTotal = swapTotal;
-        this.swapUsada = swapUsada;
-        this.usoDeDisco = usoDeDisco;
-        this.discoTotal = discoTotal;
-        this.discoUsado = discoUsado;
-        this.discoLivre = discoLivre;
-        this.taxaLeitura = taxaLeitura;
-        this.taxaEscrita = taxaEscrita;
-        this.latenciaLeitura = latenciaLeitura;
-        this.latenciaEscrita = latenciaEscrita;
-        this.netBytesEnviados = netBytesEnviados;
-        this.netBytesRecebidos = netBytesRecebidos;
-        this.freqCPU = freqCPU;
-        this.tempCPU = tempCPU;
-        this.uptime = uptime;
-        this.processo = processo;
-        this.pid = pid;
-        this.usuario = usuario;
-        this.cpuProc = cpuProc;
-        this.memProc = memProc;
-        this.threads = threads;
-        this.rss = rss;
-        this.ioLeitura = ioLeitura;
-        this.ioEscrita = ioEscrita;
-        this.quandoFoiIniciado = quandoFoiIniciado;
-        this.status = status;
-    }
-
-    public String getNomeDaMaquina() {
-        return nomeDaMaquina;
-    }
-
-    public void setNomeDaMaquina(String nomeDaMaquina) {
-        this.nomeDaMaquina = nomeDaMaquina;
-    }
-
-    public String getDataDaColeta() {
-        return dataDaColeta;
-    }
-
-    public void setDataDaColeta(String dataDaColeta) {
-        this.dataDaColeta = dataDaColeta;
-    }
-
-    public Double getUsoDeCPU() {
-        return usoDeCPU;
-    }
-
-    public void setUsoDeCPU(Double usoDeCPU) {
-        this.usoDeCPU = usoDeCPU;
-    }
-
-    public Double getLoad1() {
-        return load1;
-    }
-
-    public void setLoad1(Double load1) {
-        this.load1 = load1;
-    }
-
-    public Double getLoad5() {
-        return load5;
-    }
-
-    public void setLoad5(Double load5) {
-        this.load5 = load5;
-    }
-
-    public Double getLoad15() {
-        return load15;
-    }
-
-    public void setLoad15(Double load15) {
-        this.load15 = load15;
-    }
-
-    public Double getUsoDeRAM() {
-        return usoDeRAM;
-    }
-
-    public void setUsoDeRAM(Double usoDeRAM) {
-        this.usoDeRAM = usoDeRAM;
-    }
-
-    public Long getRamTotal() {
-        return ramTotal;
-    }
-
-    public void setRamTotal(Long ramTotal) {
-        this.ramTotal = ramTotal;
-    }
-
-    public Long getRamUsada() {
-        return ramUsada;
-    }
-
-    public void setRamUsada(Long ramUsada) {
-        this.ramUsada = ramUsada;
-    }
-
-    public Double getUsoDeSwap() {
-        return usoDeSwap;
-    }
-
-    public void setUsoDeSwap(Double usoDeSwap) {
-        this.usoDeSwap = usoDeSwap;
-    }
-
-    public Long getSwapTotal() {
-        return swapTotal;
-    }
-
-    public void setSwapTotal(Long swapTotal) {
-        this.swapTotal = swapTotal;
-    }
-
-    public Long getSwapUsada() {
-        return swapUsada;
-    }
-
-    public void setSwapUsada(Long swapUsada) {
-        this.swapUsada = swapUsada;
-    }
-
-    public Double getUsoDeDisco() {
-        return usoDeDisco;
-    }
-
-    public void setUsoDeDisco(Double usoDeDisco) {
-        this.usoDeDisco = usoDeDisco;
-    }
-
-    public Double getDiscoTotal() {
-        return discoTotal;
-    }
-
-    public void setDiscoTotal(Double discoTotal) {
-        this.discoTotal = discoTotal;
-    }
-
-    public Double getDiscoUsado() {
-        return discoUsado;
-    }
-
-    public void setDiscoUsado(Double discoUsado) {
-        this.discoUsado = discoUsado;
-    }
+//imports jira
+import okhttp3.*;
+import java.io.IOException;
+import java.util.Base64;
+import java.io.IOException;
 
-    public Double getDiscoLivre() {
-        return discoLivre;
-    }
-
-    public void setDiscoLivre(Double discoLivre) {
-        this.discoLivre = discoLivre;
-    }
-
-    public Double getTaxaLeitura() {
-        return taxaLeitura;
-    }
-
-    public void setTaxaLeitura(Double taxaLeitura) {
-        this.taxaLeitura = taxaLeitura;
-    }
-
-    public Double getTaxaEscrita() {
-        return taxaEscrita;
-    }
-
-    public void setTaxaEscrita(Double taxaEscrita) {
-        this.taxaEscrita = taxaEscrita;
-    }
-
-    public Double getLatenciaLeitura() {
-        return latenciaLeitura;
-    }
-
-    public void setLatenciaLeitura(Double latenciaLeitura) {
-        this.latenciaLeitura = latenciaLeitura;
-    }
-
-    public Double getLatenciaEscrita() {
-        return latenciaEscrita;
-    }
-
-    public void setLatenciaEscrita(Double latenciaEscrita) {
-        this.latenciaEscrita = latenciaEscrita;
-    }
-
-    public Long getNetBytesEnviados() {
-        return netBytesEnviados;
-    }
-
-    public void setNetBytesEnviados(Long netBytesEnviados) {
-        this.netBytesEnviados = netBytesEnviados;
-    }
-
-    public Long getNetBytesRecebidos() {
-        return netBytesRecebidos;
-    }
-
-    public void setNetBytesRecebidos(Long netBytesRecebidos) {
-        this.netBytesRecebidos = netBytesRecebidos;
-    }
-
-    public Double getFreqCPU() {
-        return freqCPU;
-    }
-
-    public void setFreqCPU(Double freqCPU) {
-        this.freqCPU = freqCPU;
-    }
-
-    public Double getTempCPU() {
-        return tempCPU;
-    }
-
-    public void setTempCPU(Double tempCPU) {
-        this.tempCPU = tempCPU;
-    }
-
-    public Long getUptime() {
-        return uptime;
-    }
-
-    public void setUptime(Long uptime) {
-        this.uptime = uptime;
-    }
-
-    public String getProcesso() {
-        return processo;
-    }
-
-    public void setProcesso(String processo) {
-        this.processo = processo;
-    }
-
-    public Integer getPid() {
-        return pid;
-    }
-
-    public void setPid(Integer pid) {
-        this.pid = pid;
-    }
-
-    public String getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(String usuario) {
-        this.usuario = usuario;
-    }
-
-    public Double getCpuProc() {
-        return cpuProc;
-    }
-
-    public void setCpuProc(Double cpuProc) {
-        this.cpuProc = cpuProc;
-    }
-
-    public Double getMemProc() {
-        return memProc;
-    }
-
-    public void setMemProc(Double memProc) {
-        this.memProc = memProc;
-    }
-
-    public Integer getThreads() {
-        return threads;
-    }
+public class Alerta {
+    private LocalDateTime dataAlerta;
+    private Integer registro;
+    private Integer fkComponente;
 
-    public void setThreads(Integer threads) {
-        this.threads = threads;
-    }
+    //Variaveis slack
+    private static final String SLACK_TOKEN = "";
+    private static final String CHANNEL = "#suporte-slack";
 
-    public Long getRss() {
-        return rss;
-    }
 
-    public void setRss(Long rss) {
-        this.rss = rss;
-    }
 
-    public Long getIoLeitura() {
-        return ioLeitura;
+    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {
+        this.dataAlerta = dataAlerta;
+        this.registro = registro;
+        this.fkComponente = fkComponente;
     }
 
-    public void setIoLeitura(Long ioLeitura) {
-        this.ioLeitura = ioLeitura;
+    public Alerta() {
     }
 
-    public Long getIoEscrita() {
-        return ioEscrita;
+    public LocalDateTime getDataAlerta() {
+        return dataAlerta;
     }
 
-    public void setIoEscrita(Long ioEscrita) {
-        this.ioEscrita = ioEscrita;
+    public void setDataAlerta(LocalDateTime dataAlerta) {
+        this.dataAlerta = dataAlerta;
     }
 
-    public String getQuandoFoiIniciado() {
-        return quandoFoiIniciado;
+    public Integer getRegistro() {
+        return registro;
     }
 
-    public void setQuandoFoiIniciado(String quandoFoiIniciado) {
-        this.quandoFoiIniciado = quandoFoiIniciado;
+    public void setRegistro(Integer registro) {
+        this.registro = registro;
     }
 
-    public String getStatus() {
-        return status;
+    public Integer getFkComponente() {
+        return fkComponente;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setFkComponente(Integer fkComponente) {
+        this.fkComponente = fkComponente;
     }
 
-    public void leImportaArquivoCsv(String nomeArq) {
+    public void salvaTabelaAlerta(String nomeArq) {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
-        System.out.println("Pegando informações de hostname, limite do componente de cada componente...");
-        String sqlSelect = "select s.hostname, c.limite, t.nome from componentes c\n" +
+        System.out.println("Pegando informações dos limites do servidor 'srv1'");
+        String sqlSelectCpu = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1'";
-        List<ServidorComponente> capturas = template.query(sqlSelect, new BeanPropertyRowMapper<>(ServidorComponente.class));
+                "where hostname = 'srv1' and  t.nome = 'Cpu'";
 
+        String sqlSelectRam = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'Memória'";
+
+        String sqlSelectDisco = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'Disco'";
+
+        List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteRam = template.query(sqlSelectRam, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteDisco = template.query(sqlSelectDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
+
+        Double limiteCpu = capturaLimiteCpu.get(0).getLimite();
+        Double limiteRam = capturaLimiteRam.get(0).getLimite();
+        Double limiteDisco = capturaLimiteDisco.get(0).getLimite();
 
         Reader arq = null;
         BufferedReader entrada = null;
-        BufferedWriter saida = null;
-
         // Bloco try-catch para abrir o arquivo
         try {
             arq = new InputStreamReader(new FileInputStream(nomeArq), "UTF-8");
-            saida = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream("saida.csv"), "UTF-8"));
 
             entrada = new BufferedReader(arq);
         } catch (IOException erro) {
@@ -415,70 +110,135 @@ public class LeituraCsv {
             // readLine() eh usado   para ler uma linha inteira do arquivo
             // Le a primeira linha do arquivo, que eh o cabecalho
             String linha = entrada.readLine(); // linha eh a primeira linha do arquivo
-            String cabecalho = linha + ";alertaCpu;alertaRam;alertaDisco";
-            saida.write(cabecalho);
-            saida.newLine();
 
             // separa cada item da linha usando o delimitador ;
             registro = linha.split(";");
 
             // Le a segunda linha do arquivo (1a linha de dados)
             linha = entrada.readLine();
+            registro = linha.split(";");
+
+            Double primeiroRegistroCpu = Double.valueOf(registro[2]);
+            Double primeiroRegistroRam = Double.valueOf(registro[6]);
+            Double primeiroRegistroDisco = Double.valueOf(registro[12]);
+
+            Boolean podeRegistrarCpu = false;
+            Boolean podeRegistrarRam = false;
+            Boolean podeRegistrarDisco = false;
+
+            Integer contCpu = 0;
+            Integer contRam = 0;
+            Integer contDisco = 0;
+
+
+            // verificando se o uso de cpu da primeira linha ultrapassa o limite
+            if (primeiroRegistroCpu > limiteCpu) {
+                contCpu++;
+            }
+
+            // ram...
+            if (primeiroRegistroRam > limiteRam) {
+                contRam++;
+            }
+
+            // disco...
+            if (primeiroRegistroDisco > limiteDisco) {
+                contDisco++;
+            }
 
             while (linha != null) { // enquanto nao chegou ao final do arquivo
                 registro = linha.split(";");
                 // converte de String para Integer usando Integer.valueOf
                 // Se fosse converter de String para int usa-se Integer.parseInt
                 String nomeDaMaquina = registro[0];
-                String dataDaColeta = registro[1];
+                String dataHoraColeta = registro[1];
                 Double usoCPU = Double.valueOf(registro[2]);
-                Double load1 = Double.valueOf(registro[3]);
-                Double load5 = Double.valueOf(registro[4]);
-                Double load15 = Double.valueOf(registro[5]);
                 Double usoRAM = Double.valueOf(registro[6]);
-                Long ramTotal = Long.valueOf(registro[7]);
-                Long ramUsada = Long.valueOf(registro[8]);
-                Double usoSwap = Double.valueOf(registro[9]);
-                Long swapTotal = Long.valueOf(registro[10]);
-                Long swapUsada = Long.valueOf(registro[11]);
                 Double usoDisco = Double.valueOf(registro[12]);
-                Double discoTotal = Double.valueOf(registro[13]);
-                Double discoUsado = Double.valueOf(registro[14]);
-                Double discoLivre = Double.valueOf(registro[15]);
-                Double taxaLeitura = Double.valueOf(registro[16]);
-                Double taxaEscrita = Double.valueOf(registro[17]);
-                Double latenciaLeitura = Double.valueOf(registro[18]);
-                Double latenciaEscrita = Double.valueOf(registro[19]);
-                Long netBytesEnviados = Long.valueOf(registro[20]);
-                Long netBytesRecebidos = Long.valueOf(registro[21]);
-                Double freqCPU = Double.valueOf(registro[22]);
-                Double tempCPU = Double.valueOf(registro[23]);
-                Long uptime = Long.valueOf(registro[24]);
 
+                if (usoCPU < limiteCpu) {
+                    contCpu = 0;
+                } else {
+                    contCpu++;
+                }
 
-                String alertaCpu = "não";
-                String alertaRam = "não";
-                String alertaDisco = "não";
+                if (usoRAM < limiteRam) {
+                    contRam = 0;
+                } else {
+                    contRam++;
+                }
 
+                if (usoDisco < limiteDisco) {
+                    contDisco = 0;
+                } else {
+                    contDisco++;
+                }
 
-                for (ServidorComponente c : capturas) {
-                    String tipoComponente = c.getNome();
-                    Double limite = c.getLimite();
+                if (contCpu == 3) {
+                    podeRegistrarCpu = true;
+                }
 
-                    if (tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite) {
-                        alertaCpu = "sim";
-                    } else if (tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite) {
-                        alertaRam = "sim";
-                    } else if (tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite) {
-                        alertaDisco = "sim";
+                if (contRam == 3) {
+                    podeRegistrarRam = true;
+                }
+
+                if (contDisco == 3) {
+                    podeRegistrarDisco = true;
+                }
+
+                for (ServidorComponente sc : capturaLimiteCpu) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite && podeRegistrarCpu) {
+                        String sqlInsertAlertaCpu = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaCpu, dataHoraColeta, usoCPU, 1);
+                        podeRegistrarCpu = false;
+
+                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta CPU: " + usoCPU + "%";
+                        abrirChamadoJira(msgJira);
                     }
 
                 }
-                // escreve a linha de dados + alertas
-                String novaLinha = linha + ";" + alertaCpu + ";" + alertaRam + ";" + alertaDisco;
-                saida.write(novaLinha);
-                saida.newLine();
 
+                for (ServidorComponente sc : capturaLimiteRam) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite && podeRegistrarRam && contRam >= 3) {
+                        String sqlInsertAlertaRam = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaRam, dataHoraColeta, usoRAM, 2);
+                        podeRegistrarRam = false;
+
+                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta RAM: " + usoRAM + "%";
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
+
+                for (ServidorComponente sc : capturaLimiteDisco) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite && podeRegistrarDisco && contDisco >= 3) {
+                        String sqlInsertAlertaDisco = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaDisco, dataHoraColeta, usoDisco, 3);
+                        podeRegistrarDisco = false;
+
+                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta DISCO: " + usoDisco + "%";
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
                 // Le a proxima linha do arquivo
                 linha = entrada.readLine();
             } // final do while
@@ -490,64 +250,97 @@ public class LeituraCsv {
             try {
                 entrada.close();
                 arq.close();
-                saida.close();
             } catch (IOException erro) {
                 System.out.println("Erro ao fechar o arquivo");
             }
         }
-
-        System.out.println("Processo finalizado");
-
     }
 
-    public void converterParaJson() {
-        try (CSVReader reader = new CSVReaderBuilder(new FileReader("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.csv"))
-                .withCSVParser(new CSVParserBuilder().withSeparator(';').build())
-                .build();) {
-            // Lê a primeira linha como cabeçalho
-            String[] headers = reader.readNext();
+    public static void enviarAlertaSlack(double cpuPercent, double memPercent, double diskPercent, String
+            timestamp, String hostname, Double limiteCpu, Double limiteRam, Double limiteDisco) {
 
-            if (headers == null) {
-                System.out.println("Arquivo CSV vazio ou inválido.");
-                return;
-            }
+        if (cpuPercent > limiteCpu || memPercent > limiteRam || diskPercent > limiteDisco) {
+            String alerta = String.format(
+                    "⚠️ *Alerta de uso elevado detectado!*\n" +
+                            "🕒 %s\n" +
+                            "👤 Servidor: %s\n" +
+                            "💻 CPU: %.2f%%\n" +
+                            "🧠 RAM: %.2f%%\n" +
+                            "💾 Disco: %.2f%%",
+                    timestamp, hostname, cpuPercent, memPercent, diskPercent
+            );
 
-            JSONArray jsonArray = new JSONArray();
-            String[] line;
+            // Cria uma configuração personalizada sem listeners
+            Slack slack = Slack.getInstance();
 
-            //Lê cada linha e transforma em JSONObject
-            while ((line = reader.readNext()) != null) {
-                JSONObject obj = new JSONObject();
+            try {
+                ChatPostMessageResponse response = slack.methods(SLACK_TOKEN).chatPostMessage(ChatPostMessageRequest.builder()
+                        .channel(CHANNEL)
+                        .text(alerta)
+                        .build());
 
-                for (int i = 0; i < headers.length && i < line.length; i++) {
-                    String chave = headers[i].trim();
-                    String valor = line[i].trim();
-
-                    // tenta converter números automaticamente
-                    if (valor.matches("^-?\\d+(\\.\\d+)?$")) {
-                        // valor numérico
-                        obj.put(chave, Double.parseDouble(valor));
-                    } else if (valor.equalsIgnoreCase("true") || valor.equalsIgnoreCase("false")) {
-                        // valor booleano
-                        obj.put(chave, Boolean.parseBoolean(valor));
-                    } else {
-                        // valor texto
-                        obj.put(chave, valor);
-                    }
+                if (response.isOk()) {
+                    System.out.println("Alerta enviado para o Slack.");
+                } else {
+                    System.out.println("Erro ao enviar alerta: " + response.getError());
                 }
-
-                jsonArray.put(obj);
+            } catch (IOException | SlackApiException e) {
+                System.out.println("Exceção ao enviar alerta: " + e.getMessage());
             }
-
-            // Salva o JSON com indentação bonita
-            try (FileWriter file = new FileWriter("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.json")) {
-                file.write(jsonArray.toString(2)); // 2 = indentação
-            }
-
-            System.out.println("Arquivo JSON gerado com sucesso!");
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
+
+    public void abrirChamadoJira(String msgJira) {
+        String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";
+        String email = "vitalview.sptech@gmail.com";
+        String apiToken = "Coloque o token do jira aqui";
+
+
+        String credentials = email + ":" + apiToken;
+        String basicAuth = "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+
+        String json = String.format("""
+                {
+                  "fields": {
+                    "project": { "key": "SUP" },
+                    "summary": "%s",
+                    "description": {
+                      "type": "doc",
+                      "version": 1,
+                      "content": [
+                        {
+                          "type": "paragraph",
+                          "content": [
+                            {
+                              "text": "%s",
+                              "type": "text"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "issuetype": { "name": "Reportar um Incidente" }
+                  }
+                }
+                """, msgJira, msgJira);
+
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(json, MediaType.parse("application/json"));
+        Request request = new Request.Builder()
+                .url(jiraUrl)
+                .addHeader("Authorization", basicAuth)
+                .addHeader("Accept", "application/json")
+                .post(body)
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            System.out.println("Status: " + response.code());
+            System.out.println("Body: " + response.body().string());
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+
+
 }
