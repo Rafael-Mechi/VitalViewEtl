@@ -28,7 +28,6 @@ public class Alerta {
 //    private static final String CHANNEL = "#suporte-slack";
 
 
-
     public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {
         this.dataAlerta = dataAlerta;
         this.registro = registro;
@@ -118,8 +117,8 @@ public class Alerta {
             registro = linha.split(";");
 
             Double primeiroRegistroCpu = Double.valueOf(registro[2]);
-            Double primeiroRegistroRam = Double.valueOf(registro[6]);
-            Double primeiroRegistroDisco = Double.valueOf(registro[12]);
+            Double primeiroRegistroRam = Double.valueOf(registro[3]);
+            Double primeiroRegistroDisco = Double.valueOf(registro[6]);
 
             Boolean podeRegistrarCpu = false;
             Boolean podeRegistrarRam = false;
@@ -149,11 +148,11 @@ public class Alerta {
                 registro = linha.split(";");
                 // converte de String para Integer usando Integer.valueOf
                 // Se fosse converter de String para int usa-se Integer.parseInt
-                String nomeDaMaquina = registro[0];
-                String dataHoraColeta = registro[1];
+                String nomeDaMaquina = registro[1];
+                String dataHoraColeta = registro[0];
                 Double usoCPU = Double.valueOf(registro[2]);
-                Double usoRAM = Double.valueOf(registro[6]);
-                Double usoDisco = Double.valueOf(registro[12]);
+                Double usoRAM = Double.valueOf(registro[3]);
+                Double usoDisco = Double.valueOf(registro[6]);
 
                 if (usoCPU < limiteCpu) {
                     contCpu = 0;
