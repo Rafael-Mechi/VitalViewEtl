@@ -81,13 +81,62 @@ public class Alerta {
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
                 "where hostname = 'srv1' and t.nome = 'Disco'";
 
+        String sqlSelectDown = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'Download'";
+
+        String sqlSelectUpload = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'Upload'";
+
+        String sqlSelectPacoteIn = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'PacoteIn'";
+
+        String sqlSelectPacoteOut = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'PacoteOut'";
+
+        String sqlSelectConexao = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'Conexao'";
+
+        String sqlSelectLatencia = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'Latencia'";
+
+        String sqlSelectPerdaPacote = "select c.limite, t.nome from componentes c\n" +
+                "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                "where hostname = 'srv1' and t.nome = 'PerdaPacote'";
+
         List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class));
         List<ServidorComponente> capturaLimiteRam = template.query(sqlSelectRam, new BeanPropertyRowMapper<>(ServidorComponente.class));
         List<ServidorComponente> capturaLimiteDisco = template.query(sqlSelectDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteDown = template.query(sqlSelectDown, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteUpload = template.query(sqlSelectUpload, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimitePacoteIn = template.query(sqlSelectPacoteIn, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimitePacoteOut = template.query(sqlSelectPacoteOut, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteConexao = template.query(sqlSelectConexao, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteLatencia = template.query(sqlSelectLatencia, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimitePerdaPacote = template.query(sqlSelectPerdaPacote, new BeanPropertyRowMapper<>(ServidorComponente.class));
 
         Double limiteCpu = capturaLimiteCpu.get(0).getLimite();
         Double limiteRam = capturaLimiteRam.get(0).getLimite();
         Double limiteDisco = capturaLimiteDisco.get(0).getLimite();
+        Double limiteDown = capturaLimiteDown.get(0).getLimite();
+        Double limiteUp = capturaLimiteUpload.get(0).getLimite();
+        Double limiteIn = capturaLimitePacoteIn.get(0).getLimite();
+        Double limiteOut = capturaLimitePacoteOut.get(0).getLimite();
+        Double limiteConexao = capturaLimiteConexao.get(0).getLimite();
+        Double limiteLatencia = capturaLimiteLatencia.get(0).getLimite();
+        Double limitePerdaPacote = capturaLimitePerdaPacote.get(0).getLimite();
 
         Reader arq = null;
         BufferedReader entrada = null;
@@ -119,15 +168,40 @@ public class Alerta {
             Double primeiroRegistroCpu = Double.valueOf(registro[2]);
             Double primeiroRegistroRam = Double.valueOf(registro[3]);
             Double primeiroRegistroDisco = Double.valueOf(registro[6]);
+            Double primeiroRegistroDown = Double.valueOf(registro[16]);
+            Double primeiroRegistroUp = Double.valueOf(registro[17]);
+            Long primeiroRegistroIn = Long.valueOf(registro[18]);
+            Long primeiroRegistroOut = Long.valueOf(registro[19]);
+            Integer primeiroRegistroConexao = Integer.valueOf(registro[20]);
+            Double primeiroRegistroLatencia = Double.valueOf(registro[21]);
+            Double primeiroRegistroPerdaPacote;
+            if (registro.length > 22 && registro[22] != null && !registro[22].isEmpty()) {
+                primeiroRegistroPerdaPacote = Double.valueOf(registro[22]);
+            } else {
+                primeiroRegistroPerdaPacote = 0.0;
+            }
 
             Boolean podeRegistrarCpu = false;
             Boolean podeRegistrarRam = false;
             Boolean podeRegistrarDisco = false;
+            Boolean podeRegistrarDown = false;
+            Boolean podeRegistrarUp = false;
+            Boolean podeRegistrarIn = false;
+            Boolean podeRegistrarOut = false;
+            Boolean podeRegistrarConexao = false;
+            Boolean podeRegistrarLatencia = false;
+            Boolean podeRegistrarPerdaPacote = false;
 
             Integer contCpu = 0;
             Integer contRam = 0;
             Integer contDisco = 0;
-
+            Integer contDown = 0;
+            Integer contUp = 0;
+            Integer contIn = 0;
+            Integer contOut = 0;
+            Integer contConexao = 0;
+            Integer contLatencia = 0;
+            Integer contPerdaPacote = 0;
 
             // verificando se o uso de cpu da primeira linha ultrapassa o limite
             if (primeiroRegistroCpu > limiteCpu) {
@@ -144,6 +218,34 @@ public class Alerta {
                 contDisco++;
             }
 
+            if (primeiroRegistroDown > limiteDown) {
+                contDown++;
+            }
+
+            if (primeiroRegistroUp > limiteUp) {
+                contUp++;
+            }
+
+            if (primeiroRegistroIn > (limiteIn * 1000)) {
+                contIn++;
+            }
+
+            if (primeiroRegistroOut > (limiteOut * 1000)) {
+                contOut++;
+            }
+
+            if (primeiroRegistroConexao > limiteConexao) {
+                contConexao++;
+            }
+
+            if (primeiroRegistroLatencia > limiteLatencia) {
+                contLatencia++;
+            }
+
+            if (primeiroRegistroPerdaPacote > limitePerdaPacote) {
+                contPerdaPacote++;
+            }
+
             while (linha != null) { // enquanto nao chegou ao final do arquivo
                 registro = linha.split(";");
                 // converte de String para Integer usando Integer.valueOf
@@ -153,7 +255,21 @@ public class Alerta {
                 Double usoCPU = Double.valueOf(registro[2]);
                 Double usoRAM = Double.valueOf(registro[3]);
                 Double usoDisco = Double.valueOf(registro[6]);
+                Double netDown = Double.valueOf(registro[16]);
+                Double netUp = Double.valueOf(registro[17]);
+                Long pacotesIn = Long.valueOf(registro[18]);
+                Long pacotesOut = Long.valueOf(registro[19]);
+                Integer conexoes = Integer.valueOf(registro[20]);
+                Double latencia = Double.valueOf(registro[21]);
+                Double perdaPacote;
+                if (registro.length > 22 && registro[22] != null && !registro[22].isEmpty()) {
+                    perdaPacote = Double.valueOf(registro[22]);
+                } else {
+                    perdaPacote = 0.0;
+                }
 
+
+                //Contagem de registros possíveis alertas.
                 if (usoCPU < limiteCpu) {
                     contCpu = 0;
                 } else {
@@ -172,6 +288,50 @@ public class Alerta {
                     contDisco++;
                 }
 
+                if (netDown < limiteDown) {
+                    contDown = 0;
+                } else {
+                    contDown++;
+                }
+
+                if (netUp < limiteUp) {
+                    contUp = 0;
+                } else {
+                    contUp++;
+                }
+
+                if (pacotesIn < (limiteIn * 1000)) {
+                    contIn = 0;
+                } else {
+                    contIn++;
+                }
+
+                if (pacotesOut < (limiteOut * 1000)) {
+                    contOut = 0;
+                } else {
+                    contOut++;
+                }
+
+                if (conexoes < limiteConexao) {
+                    contConexao = 0;
+                } else {
+                    contConexao++;
+                }
+
+                if (latencia < limiteLatencia) {
+                    contLatencia = 0;
+                } else {
+                    contLatencia++;
+                }
+
+                if (perdaPacote < limitePerdaPacote) {
+                    contPerdaPacote = 0;
+                } else {
+                    contPerdaPacote++;
+                }
+
+                //Verificando veracidade de alerta, mais que 3 registros.
+
                 if (contCpu == 3) {
                     podeRegistrarCpu = true;
                 }
@@ -182,6 +342,34 @@ public class Alerta {
 
                 if (contDisco == 3) {
                     podeRegistrarDisco = true;
+                }
+
+                if (contDown == 3) {
+                    podeRegistrarDown = true;
+                }
+
+                if (contUp == 3) {
+                    podeRegistrarUp = true;
+                }
+
+                if (contIn == 3) {
+                    podeRegistrarIn = true;
+                }
+
+                if (contOut == 3) {
+                    podeRegistrarOut = true;
+                }
+
+                if (contConexao == 3) {
+                    podeRegistrarConexao = true;
+                }
+
+                if (contLatencia == 3) {
+                    podeRegistrarLatencia = true;
+                }
+
+                if (contPerdaPacote == 3) {
+                    podeRegistrarPerdaPacote = true;
                 }
 
                 for (ServidorComponente sc : capturaLimiteCpu) {
@@ -233,6 +421,132 @@ public class Alerta {
 //                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
 
                         String msgJira = "Alerta DISCO: " + usoDisco + "%";
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
+
+                for (ServidorComponente sc : capturaLimiteDown) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("download") && netDown > limite && podeRegistrarDown && contDown >= 3) {
+                        String sqlInsertAlertaDown = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaDown, dataHoraColeta, netDown, 4);
+                        podeRegistrarDown = false;
+
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta REDE - VELOCIDADE DOWNLOAD: " + netDown + "Mbps";
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
+
+                for (ServidorComponente sc : capturaLimiteUpload) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("upload") && netUp > limite && podeRegistrarUp && contUp >= 3) {
+                        String sqlInsertAlertaUp = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaUp, dataHoraColeta, netUp, 5);
+                        podeRegistrarUp = false;
+
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta REDE - VELOCIDADE UPLOAD: " + netUp + "Mbps";
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
+
+                for (ServidorComponente sc : capturaLimitePacoteIn) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("pacotein") && pacotesIn > (limite * 1000) && podeRegistrarIn && contIn >= 3) {
+                        String sqlInsertAlertaIn = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaIn, dataHoraColeta, pacotesIn, 6);
+                        podeRegistrarIn = false;
+
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta REDE - ENTRADA DE PACOTES: " + pacotesIn;
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
+
+                for (ServidorComponente sc : capturaLimitePacoteOut) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("pacoteout") && pacotesOut > (limite * 1000) && podeRegistrarOut && contOut >= 3) {
+                        String sqlInsertAlertaOut = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaOut, dataHoraColeta, pacotesOut, 7);
+                        podeRegistrarOut = false;
+
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta REDE - SAÍDA DE PACOTES: " + pacotesOut;
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
+
+                for (ServidorComponente sc : capturaLimiteConexao) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("conexao") && conexoes > limite && podeRegistrarConexao && contConexao >= 3) {
+                        String sqlInsertAlertaConexao = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaConexao, dataHoraColeta, conexoes, 8);
+                        podeRegistrarConexao = false;
+
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta REDE - CONEXÕES NA REDE: " + conexoes;
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
+
+                for (ServidorComponente sc : capturaLimiteLatencia) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("latencia") && latencia > limite && podeRegistrarLatencia && contLatencia >= 3) {
+                        String sqlInsertAlertaLatencia = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaLatencia, dataHoraColeta, latencia, 9);
+                        podeRegistrarLatencia = false;
+
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta REDE - LATÊNCIA: " + latencia + "ms (milissegundos)";
+                        abrirChamadoJira(msgJira);
+                    }
+
+                }
+
+                for (ServidorComponente sc : capturaLimitePerdaPacote) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("perdapacote") && perdaPacote > limite && podeRegistrarPerdaPacote && contPerdaPacote >= 3) {
+                        String sqlInsertAlertaPerda = "insert into alerta (data_alerta, registro, fkComponente) values" +
+                                "(?, ?, ?)";
+                        template.update(sqlInsertAlertaPerda, dataHoraColeta, perdaPacote, 10);
+                        podeRegistrarPerdaPacote = false;
+
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta REDE - PERDA DE PACOTES: " + perdaPacote + "%";
                         abrirChamadoJira(msgJira);
                     }
 
@@ -293,8 +607,7 @@ public class Alerta {
     public void abrirChamadoJira(String msgJira) {
         String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";
         String email = "vitalview.sptech@gmail.com";
-        String apiToken = "Coloque o token do jira aqui";
-
+        String apiToken = "SEU_TOKEN_AQUI";
 
         String credentials = email + ":" + apiToken;
         String basicAuth = "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());

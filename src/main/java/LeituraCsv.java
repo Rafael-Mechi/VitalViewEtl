@@ -17,8 +17,8 @@ public class LeituraCsv {
     private String nomeDaMaquina;
     private Double usoDeCPU;
     private Double usoDeRAM;
-    private Long ramTotal;
-    private Long ramUsada;
+    private Double ramTotal;
+    private Double ramUsada;
     private Double usoDeDisco;
     private Double discoTotal;
     private Double discoUsado;
@@ -27,12 +27,12 @@ public class LeituraCsv {
     private Double taxaEscrita;
     private Double latenciaLeitura;
     private Double latenciaEscrita;
-    private Long netBytesEnviados;
-    private Long netBytesRecebidos;
+    private Double netBytesEnviados;
+    private Double netBytesRecebidos;
     private Double netDown;
     private Double netUp;
-    private Long pacotesIn;
-    private Long pacotesOut;
+    private Double pacotesIn;
+    private Double pacotesOut;
     private Integer conexoes;
     private Double latencia;
     private Double perdaPacote;
@@ -41,7 +41,7 @@ public class LeituraCsv {
     public LeituraCsv() {
     }
 
-    public LeituraCsv(String nomeDaMaquina, String dataDaColeta, Double usoDeCPU, Double usoDeRAM, Long ramTotal, Long ramUsada, Double usoDeDisco, Double discoTotal, Double discoUsado, Double discoLivre, Double taxaLeitura, Double taxaEscrita, Double latenciaLeitura, Double latenciaEscrita, Long netBytesEnviados, Long netBytesRecebidos, Double netDown, Double netUp, Long pacotesIn, Long pacotesOut, Integer conexoes, Double latencia, Double perdaPacote, Long uptime) {
+    public LeituraCsv(String dataDaColeta, String nomeDaMaquina, Double usoDeCPU, Double usoDeRAM, Double ramTotal, Double ramUsada, Double usoDeDisco, Double discoTotal, Double discoUsado, Double discoLivre, Double taxaLeitura, Double taxaEscrita, Double latenciaLeitura, Double latenciaEscrita, Double netBytesEnviados, Double netBytesRecebidos, Double netDown, Double netUp, Double pacotesIn, Double pacotesOut, Integer conexoes, Double latencia, Double perdaPacote, Long uptime) {
         this.dataDaColeta = dataDaColeta;
         this.nomeDaMaquina = nomeDaMaquina;
         this.usoDeCPU = usoDeCPU;
@@ -67,7 +67,6 @@ public class LeituraCsv {
         this.perdaPacote = perdaPacote;
         this.uptime = uptime;
     }
-
 
     public String getDataDaColeta() {
         return dataDaColeta;
@@ -101,20 +100,36 @@ public class LeituraCsv {
         this.usoDeRAM = usoDeRAM;
     }
 
-    public Long getRamTotal() {
+    public Double getRamTotal() {
         return ramTotal;
     }
 
-    public void setRamTotal(Long ramTotal) {
+    public void setRamTotal(Double ramTotal) {
         this.ramTotal = ramTotal;
     }
 
-    public Long getRamUsada() {
+    public Double getRamUsada() {
         return ramUsada;
     }
 
-    public void setRamUsada(Long ramUsada) {
+    public void setRamUsada(Double ramUsada) {
         this.ramUsada = ramUsada;
+    }
+
+    public void setNetBytesEnviados(Double netBytesEnviados) {
+        this.netBytesEnviados = netBytesEnviados;
+    }
+
+    public void setNetBytesRecebidos(Double netBytesRecebidos) {
+        this.netBytesRecebidos = netBytesRecebidos;
+    }
+
+    public void setPacotesIn(Double pacotesIn) {
+        this.pacotesIn = pacotesIn;
+    }
+
+    public void setPacotesOut(Double pacotesOut) {
+        this.pacotesOut = pacotesOut;
     }
 
     public Double getUsoDeDisco() {
@@ -181,21 +196,6 @@ public class LeituraCsv {
         this.latenciaEscrita = latenciaEscrita;
     }
 
-    public Long getNetBytesEnviados() {
-        return netBytesEnviados;
-    }
-
-    public void setNetBytesEnviados(Long netBytesEnviados) {
-        this.netBytesEnviados = netBytesEnviados;
-    }
-
-    public Long getNetBytesRecebidos() {
-        return netBytesRecebidos;
-    }
-
-    public void setNetBytesRecebidos(Long netBytesRecebidos) {
-        this.netBytesRecebidos = netBytesRecebidos;
-    }
 
     public Double getNetDown() {
         return netDown;
@@ -213,21 +213,6 @@ public class LeituraCsv {
         this.netUp = netUp;
     }
 
-    public Long getPacotesIn() {
-        return pacotesIn;
-    }
-
-    public void setPacotesIn(Long pacotesIn) {
-        this.pacotesIn = pacotesIn;
-    }
-
-    public Long getPacotesOut() {
-        return pacotesOut;
-    }
-
-    public void setPacotesOut(Long pacotesOut) {
-        this.pacotesOut = pacotesOut;
-    }
 
     public Integer getConexoes() {
         return conexoes;
@@ -285,6 +270,7 @@ public class LeituraCsv {
                     new FileOutputStream("saida.csv"), "UTF-8"));
 
             entrada = new BufferedReader(arq);
+
         } catch (IOException erro) {
             System.out.println("Erro na abertura do arquivo");
             System.exit(1);
@@ -297,7 +283,7 @@ public class LeituraCsv {
             // readLine() eh usado   para ler uma linha inteira do arquivo
             // Le a primeira linha do arquivo, que eh o cabecalho
             String linha = entrada.readLine(); // linha eh a primeira linha do arquivo
-            String cabecalho = linha + ";alertaCpu;alertaRam;alertaDisco";
+            String cabecalho = linha + ";alertaCpu;alertaRam;alertaDisco;alertaNetDown;alertaNetUp;alertaPacotesIn;alertaPacotesOut;alertaConexoes;alertaLatencia;alertaperdaPacote";
             saida.write(cabecalho);
             saida.newLine();
 
@@ -315,8 +301,8 @@ public class LeituraCsv {
                 String nomeDaMaquina = registro[1];
                 Double usoCPU = Double.valueOf(registro[2]);
                 Double usoRAM = Double.valueOf(registro[3]);
-                Long ramTotal = Long.valueOf(registro[4]);
-                Long ramUsada = Long.valueOf(registro[5]);
+                Double ramTotal = Double.valueOf(registro[4]);
+                Double ramUsada = Double.valueOf(registro[5]);
                 Double usoDisco = Double.valueOf(registro[6]);
                 Double discoTotal = Double.valueOf(registro[7]);
                 Double discoUsado = Double.valueOf(registro[8]);
@@ -325,18 +311,19 @@ public class LeituraCsv {
                 Double taxaEscrita = Double.valueOf(registro[11]);
                 Double latenciaLeitura = Double.valueOf(registro[12]);
                 Double latenciaEscrita = Double.valueOf(registro[13]);
-                Long netBytesEnviados = Long.valueOf(registro[14]);
-                Long netBytesRecebidos = Long.valueOf(registro[15]);
+                Double netBytesEnviados = Double.valueOf(registro[14]);
+                Double netBytesRecebidos = Double.valueOf(registro[15]);
                 Double netDown = Double.valueOf(registro[16]);
                 Double netUp = Double.valueOf(registro[17]);
-                Long pacotesIn = Long.valueOf(registro[18]);
-                Long pacotesOut = Long.valueOf(registro[19]);
+                Double pacotesIn = Double.valueOf(registro[18]);
+                Double pacotesOut = Double.valueOf(registro[19]);
                 Integer conexoes = Integer.valueOf(registro[20]);
                 Double latencia = Double.valueOf(registro[21]);
-                if (registro[22] == null || registro[22].isEmpty()){
-                    perdaPacote = 0.0;
-                } else {
+                Double perdaPacote;
+                if (registro.length > 22 && registro[22] != null && !registro[22].isEmpty()) {
                     perdaPacote = Double.valueOf(registro[22]);
+                } else {
+                    perdaPacote = 0.0;
                 }
                 Long uptime = Long.valueOf(registro[23]);
 
@@ -363,36 +350,22 @@ public class LeituraCsv {
                         alertaRam = "sim";
                     } else if (tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite) {
                         alertaDisco = "sim";
+                    } else if (tipoComponente.equalsIgnoreCase("download") && netDown > limite) {
+                        alertaNetDown = "sim";
+                    } else if (tipoComponente.equalsIgnoreCase("upload") && netUp > limite) {
+                        alertaNetUp = "sim";
+                    } else if (tipoComponente.equalsIgnoreCase("pacotein") && pacotesIn > (limite * 1000)) {
+                        alertaPacotesIn = "sim";
+                    } else if (tipoComponente.equalsIgnoreCase("pacoteout") && pacotesOut > (limite * 1000)) {
+                        alertaPacotesOut = "sim";
+                    } else if (tipoComponente.equalsIgnoreCase("conexao") && conexoes > limite) {
+                        alertaConexoes = "sim";
+                    } else if (tipoComponente.equalsIgnoreCase("latencia") && latencia > limite) {
+                        alertaLatencia = "sim";
+                    } else if (tipoComponente.equalsIgnoreCase("perdapacote") && perdaPacote > limite) {
+                        alertaperdaPacote = "sim";
                     }
 
-                }
-
-                if (netDown >= 9.04) {
-                    alertaNetDown = "sim";
-                }
-
-                if (netUp >= 0.13){
-                    alertaNetUp = "sim";
-                }
-
-                if (pacotesIn >= 37136.60){
-                    alertaPacotesIn = "sim";
-                }
-
-                if (pacotesOut >= 4695.00){
-                    alertaPacotesOut = "sim";
-                }
-
-                if (conexoes >= 34){
-                    alertaConexoes = "sim";
-                }
-
-                if (latencia >= 18.88){
-                    alertaLatencia = "sim";
-                }
-
-                if (perdaPacote > 0.5){
-                    alertaperdaPacote = "sim";
                 }
 
                 // escreve a linha de dados + alertas
@@ -422,10 +395,14 @@ public class LeituraCsv {
     }
 
     public void converterParaJson() {
-        try (CSVReader reader = new CSVReaderBuilder(new FileReader("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.csv"))
+
+        String caminhoCsv = "saida.csv";
+        String caminhoJson = "saida.json";
+
+        try (CSVReader reader = new CSVReaderBuilder(new FileReader(caminhoCsv))
                 .withCSVParser(new CSVParserBuilder().withSeparator(';').build())
-                .build();) {
-            // Lê a primeira linha como cabeçalho
+                .build()) {
+
             String[] headers = reader.readNext();
 
             if (headers == null) {
@@ -436,7 +413,6 @@ public class LeituraCsv {
             JSONArray jsonArray = new JSONArray();
             String[] line;
 
-            //Lê cada linha e transforma em JSONObject
             while ((line = reader.readNext()) != null) {
                 JSONObject obj = new JSONObject();
 
@@ -444,15 +420,11 @@ public class LeituraCsv {
                     String chave = headers[i].trim();
                     String valor = line[i].trim();
 
-                    // tenta converter números automaticamente
                     if (valor.matches("^-?\\d+(\\.\\d+)?$")) {
-                        // valor numérico
                         obj.put(chave, Double.parseDouble(valor));
                     } else if (valor.equalsIgnoreCase("true") || valor.equalsIgnoreCase("false")) {
-                        // valor booleano
                         obj.put(chave, Boolean.parseBoolean(valor));
                     } else {
-                        // valor texto
                         obj.put(chave, valor);
                     }
                 }
@@ -460,12 +432,12 @@ public class LeituraCsv {
                 jsonArray.put(obj);
             }
 
-            // Salva o JSON com indentação bonita
-            try (FileWriter file = new FileWriter("/Users/rr658/Downloads/Documentos VitalView/VitalViewEtl/saida.json")) {
-                file.write(jsonArray.toString(2)); // 2 = indentação
+            // Agora sim, salva como JSON MESMO:
+            try (FileWriter file = new FileWriter(caminhoJson)) {
+                file.write(jsonArray.toString(2)); // 2 = indentação bonitinha
             }
 
-            System.out.println("Arquivo JSON gerado com sucesso!");
+            System.out.println("Arquivo JSON gerado com sucesso: " + caminhoJson);
 
         } catch (Exception e) {
             e.printStackTrace();
