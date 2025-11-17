@@ -11,7 +11,7 @@ public class Main {
         Alerta alerta = new Alerta();
         LeituraCsv leituraCsv = new LeituraCsv();
 
-        leituraCsv.leImportaArquivoCsv("captura_srv1.csv");
+        leituraCsv.leImportaArquivoCsv("id_servidor_nomeHospital_0.csv");
         alerta.salvaTabelaAlerta("captura_srv1.csv");
         leituraCsv.converterParaJson();
 

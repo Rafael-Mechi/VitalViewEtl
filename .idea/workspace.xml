@@ -6,12 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/captura_principal.csv" beforeDir="false" afterPath="$PROJECT_DIR$/captura_principal.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/saida.csv" beforeDir="false" afterPath="$PROJECT_DIR$/saida.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Alerta.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Alerta.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/DatabaseConfiguration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/DatabaseConfiguration.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Alerta.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Alerta.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/DatabaseConfiguration.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/DatabaseConfiguration.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/LeituraCsv.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/LeituraCsv.class" afterDir="false" />
     </list>
@@ -30,18 +28,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "annaluizasegarra01"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;annaluizasegarra01&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Rafael-Mechi/VitalViewEtl.git",
-    "accountId": "a32e624b-1b1b-4629-a0d8-f97c284f183e"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Rafael-Mechi/VitalViewEtl.git&quot;,
+    &quot;accountId&quot;: &quot;a32e624b-1b1b-4629-a0d8-f97c284f183e&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 4
 }</component>
@@ -61,7 +59,8 @@
     "last_opened_file_path": "C:/Users/User/OneDrive - SPTech School/Área de Trabalho/Sptech/Segundo Semestre/VitalViewEtl",
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0"
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
   <component name="RecentsManager">

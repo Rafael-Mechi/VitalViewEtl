@@ -283,7 +283,7 @@ public class LeituraCsv {
             // readLine() eh usado   para ler uma linha inteira do arquivo
             // Le a primeira linha do arquivo, que eh o cabecalho
             String linha = entrada.readLine(); // linha eh a primeira linha do arquivo
-            String cabecalho = linha + ";alertaCpu;alertaRam;alertaDisco;alertaNetDown;alertaNetUp;alertaPacotesIn;alertaPacotesOut;alertaConexoes;alertaLatencia;alertaperdaPacote";
+            String cabecalho = linha + ";alertaCpu;alertaRam;alertaDisco;alertaNetDown;alertaNetUp;alertaPacotesIn;alertaPacotesOut;alertaConexoes;alertaLatencia;alertaperdaPacote;saudeServidor;scoreSaudeServidor";
             saida.write(cabecalho);
             saida.newLine();
 
@@ -320,6 +320,7 @@ public class LeituraCsv {
                 Integer conexoes = Integer.valueOf(registro[20]);
                 Double latencia = Double.valueOf(registro[21]);
                 Double perdaPacote;
+
                 if (registro.length > 22 && registro[22] != null && !registro[22].isEmpty()) {
                     perdaPacote = Double.valueOf(registro[22]);
                 } else {
@@ -338,6 +339,8 @@ public class LeituraCsv {
                 String alertaConexoes = "não";
                 String alertaLatencia = "não";
                 String alertaperdaPacote = "não";
+                String saudeServidor = "Saudavel";
+                Integer scoreSaudeServidor = 100;
 
 
                 for (ServidorComponente c : capturas) {
@@ -346,10 +349,13 @@ public class LeituraCsv {
 
                     if (tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite) {
                         alertaCpu = "sim";
+                        scoreSaudeServidor -= 30;
                     } else if (tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite) {
                         alertaRam = "sim";
+                        scoreSaudeServidor -= 30;
                     } else if (tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite) {
                         alertaDisco = "sim";
+                        scoreSaudeServidor -= 40;
                     } else if (tipoComponente.equalsIgnoreCase("download") && netDown > limite) {
                         alertaNetDown = "sim";
                     } else if (tipoComponente.equalsIgnoreCase("upload") && netUp > limite) {
@@ -365,11 +371,19 @@ public class LeituraCsv {
                     } else if (tipoComponente.equalsIgnoreCase("perdapacote") && perdaPacote > limite) {
                         alertaperdaPacote = "sim";
                     }
-
                 }
 
+                if (scoreSaudeServidor == 100){
+                    saudeServidor = "Saudável";
+                } else if (scoreSaudeServidor == 60 || scoreSaudeServidor == 70) {
+                    saudeServidor = "Alerta";
+                } else if (scoreSaudeServidor == 30 || scoreSaudeServidor == 40 || scoreSaudeServidor == 0) {
+                    saudeServidor = "Crítico";
+                }
+
+
                 // escreve a linha de dados + alertas
-                String novaLinha = linha + ";" + alertaCpu + ";" + alertaRam + ";" + alertaDisco + ";" + alertaNetDown + ";" + alertaNetUp + ";" + alertaPacotesIn + ";" + alertaPacotesOut + ";" + alertaConexoes + ";" + alertaLatencia + ";" + alertaperdaPacote;
+                String novaLinha = linha + ";" + alertaCpu + ";" + alertaRam + ";" + alertaDisco + ";" + alertaNetDown + ";" + alertaNetUp + ";" + alertaPacotesIn + ";" + alertaPacotesOut + ";" + alertaConexoes + ";" + alertaLatencia + ";" + alertaperdaPacote + ";" + saudeServidor + ";" + scoreSaudeServidor;
                 saida.write(novaLinha);
                 saida.newLine();
 
