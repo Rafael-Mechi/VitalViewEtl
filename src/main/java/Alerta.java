@@ -23,10 +23,27 @@ public class Alerta {
     private Integer registro;
     private Integer fkComponente;
 
-//    //Variaveis slack
-//    private static final String SLACK_TOKEN = "";
-//    private static final String CHANNEL = "#suporte-slack";
+    // Códigos das métricas de rede (1 a 7)
+    private Integer codigoDown = 1;
+    private Integer codigoUp = 2;
+    private Integer codigoIn = 3;
+    private Integer codigoOut = 4;
+    private Integer codigoConexao = 5;
+    private Integer codigoLatencia = 6;
+    private Integer codigoPerda = 7;
 
+    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente, Integer codigoDown, Integer codigoUp, Integer codigoIn, Integer codigoOut, Integer codigoConexao, Integer codigoLatencia, Integer codigoPerda) {
+        this.dataAlerta = dataAlerta;
+        this.registro = registro;
+        this.fkComponente = fkComponente;
+        this.codigoDown = codigoDown;
+        this.codigoUp = codigoUp;
+        this.codigoIn = codigoIn;
+        this.codigoOut = codigoOut;
+        this.codigoConexao = codigoConexao;
+        this.codigoLatencia = codigoLatencia;
+        this.codigoPerda = codigoPerda;
+    }
 
     public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {
         this.dataAlerta = dataAlerta;
@@ -81,40 +98,55 @@ public class Alerta {
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
                 "where hostname = 'srv1' and t.nome = 'Disco'";
 
-        String sqlSelectDown = "select c.limite, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Download'";
+        String sqlSelectDown =
+                "select lr.limite, r.metrica as nome " +
+                        "from limiteRede lr " +
+                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+                        "inner join rede r on r.idRede = lr.fkRede " +
+                        "where s.hostname = 'srv1' and r.metrica = 'Download'";
 
-        String sqlSelectUpload = "select c.limite, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Upload'";
+        String sqlSelectUpload =
+                "select lr.limite, r.metrica as nome " +
+                        "from limiteRede lr " +
+                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+                        "inner join rede r on r.idRede = lr.fkRede " +
+                        "where s.hostname = 'srv1' and r.metrica = 'Upload'";
 
-        String sqlSelectPacoteIn = "select c.limite, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'PacoteIn'";
+        String sqlSelectPacoteIn =
+                "select lr.limite, r.metrica as nome " +
+                        "from limiteRede lr " +
+                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+                        "inner join rede r on r.idRede = lr.fkRede " +
+                        "where s.hostname = 'srv1' and r.metrica = 'PacoteIn'";
 
-        String sqlSelectPacoteOut = "select c.limite, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'PacoteOut'";
+        String sqlSelectPacoteOut =
+                "select lr.limite, r.metrica as nome " +
+                        "from limiteRede lr " +
+                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+                        "inner join rede r on r.idRede = lr.fkRede " +
+                        "where s.hostname = 'srv1' and r.metrica = 'PacoteOut'";
 
-        String sqlSelectConexao = "select c.limite, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Conexao'";
+        String sqlSelectConexao =
+                "select lr.limite, r.metrica as nome " +
+                        "from limiteRede lr " +
+                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+                        "inner join rede r on r.idRede = lr.fkRede " +
+                        "where s.hostname = 'srv1' and r.metrica = 'Conexao'";
 
-        String sqlSelectLatencia = "select c.limite, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Latencia'";
+        String sqlSelectLatencia =
+                "select lr.limite, r.metrica as nome " +
+                        "from limiteRede lr " +
+                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+                        "inner join rede r on r.idRede = lr.fkRede " +
+                        "where s.hostname = 'srv1' and r.metrica = 'Latencia'";
 
-        String sqlSelectPerdaPacote = "select c.limite, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'PerdaPacote'";
+        String sqlSelectPerdaPacote =
+                "select lr.limite, r.metrica as nome " +
+                        "from limiteRede lr " +
+                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+                        "inner join rede r on r.idRede = lr.fkRede " +
+                        "where s.hostname = 'srv1' and r.metrica = 'PerdaPacote'";
+
 
         List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class));
         List<ServidorComponente> capturaLimiteRam = template.query(sqlSelectRam, new BeanPropertyRowMapper<>(ServidorComponente.class));
@@ -137,6 +169,15 @@ public class Alerta {
         Double limiteConexao = capturaLimiteConexao.get(0).getLimite();
         Double limiteLatencia = capturaLimiteLatencia.get(0).getLimite();
         Double limitePerdaPacote = capturaLimitePerdaPacote.get(0).getLimite();
+
+        String sqlSelectCompRede =
+                "select c.idComponente " +
+                        "from componentes c " +
+                        "join servidores s on c.fkServidor = s.idServidor " +
+                        "join tipoComponente t on t.idTipo = c.fkTipo " +
+                        "where s.hostname = 'srv1' and t.nome = 'Rede'";
+
+        Integer fkComponenteRede = template.queryForObject(sqlSelectCompRede, Integer.class);
 
         Reader arq = null;
         BufferedReader entrada = null;
@@ -384,7 +425,7 @@ public class Alerta {
 
 //                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
 
-                        String msgJira = "Alerta CPU: " + usoCPU + "%";
+                        String msgJira = "Alerta CPU: " + usoCPU + "%" + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -402,7 +443,7 @@ public class Alerta {
 
 //                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
 
-                        String msgJira = "Alerta RAM: " + usoRAM + "%";
+                        String msgJira = "Alerta RAM: " + usoRAM + "%" + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -420,7 +461,7 @@ public class Alerta {
 
 //                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
 
-                        String msgJira = "Alerta DISCO: " + usoDisco + "%";
+                        String msgJira = "Alerta DISCO: " + usoDisco + "%" + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -431,14 +472,13 @@ public class Alerta {
                     Double limite = sc.getLimite();
 
                     if (tipoComponente.equalsIgnoreCase("download") && netDown > limite && podeRegistrarDown && contDown >= 3) {
-                        String sqlInsertAlertaDown = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                                "(?, ?, ?)";
-                        template.update(sqlInsertAlertaDown, dataHoraColeta, netDown, 4);
+                        String sqlInsertAlertaRede = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        // registro = 1 (Download), fkComponente = Rede
+                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoDown, fkComponenteRede);
                         podeRegistrarDown = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta REDE - VELOCIDADE DOWNLOAD: " + netDown + "Mbps";
+                        // Detalhe no Jira
+                        String msgJira = "Alerta REDE - VELOCIDADE DOWNLOAD: " + netDown + "Mbps" + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -449,14 +489,11 @@ public class Alerta {
                     Double limite = sc.getLimite();
 
                     if (tipoComponente.equalsIgnoreCase("upload") && netUp > limite && podeRegistrarUp && contUp >= 3) {
-                        String sqlInsertAlertaUp = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                                "(?, ?, ?)";
-                        template.update(sqlInsertAlertaUp, dataHoraColeta, netUp, 5);
+                        String sqlInsertAlertaRede = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoUp, fkComponenteRede);
                         podeRegistrarUp = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta REDE - VELOCIDADE UPLOAD: " + netUp + "Mbps";
+                        String msgJira = "Alerta REDE - VELOCIDADE UPLOAD: " + netUp + "Mbps" + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -467,14 +504,11 @@ public class Alerta {
                     Double limite = sc.getLimite();
 
                     if (tipoComponente.equalsIgnoreCase("pacotein") && pacotesIn > (limite * 1000) && podeRegistrarIn && contIn >= 3) {
-                        String sqlInsertAlertaIn = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                                "(?, ?, ?)";
-                        template.update(sqlInsertAlertaIn, dataHoraColeta, pacotesIn, 6);
+                        String sqlInsertAlertaRede = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoIn, fkComponenteRede);
                         podeRegistrarIn = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta REDE - ENTRADA DE PACOTES: " + pacotesIn;
+                        String msgJira = "Alerta REDE - ENTRADA DE PACOTES: " + pacotesIn + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -485,14 +519,11 @@ public class Alerta {
                     Double limite = sc.getLimite();
 
                     if (tipoComponente.equalsIgnoreCase("pacoteout") && pacotesOut > (limite * 1000) && podeRegistrarOut && contOut >= 3) {
-                        String sqlInsertAlertaOut = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                                "(?, ?, ?)";
-                        template.update(sqlInsertAlertaOut, dataHoraColeta, pacotesOut, 7);
+                        String sqlInsertAlertaRede = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoOut, fkComponenteRede);
                         podeRegistrarOut = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta REDE - SAÍDA DE PACOTES: " + pacotesOut;
+                        String msgJira = "Alerta REDE - SAÍDA DE PACOTES: " + pacotesOut + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -503,14 +534,11 @@ public class Alerta {
                     Double limite = sc.getLimite();
 
                     if (tipoComponente.equalsIgnoreCase("conexao") && conexoes > limite && podeRegistrarConexao && contConexao >= 3) {
-                        String sqlInsertAlertaConexao = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                                "(?, ?, ?)";
-                        template.update(sqlInsertAlertaConexao, dataHoraColeta, conexoes, 8);
+                        String sqlInsertAlertaRede = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoConexao, fkComponenteRede);
                         podeRegistrarConexao = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta REDE - CONEXÕES NA REDE: " + conexoes;
+                        String msgJira = "Alerta REDE - CONEXÕES NA REDE: " + conexoes + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -521,14 +549,11 @@ public class Alerta {
                     Double limite = sc.getLimite();
 
                     if (tipoComponente.equalsIgnoreCase("latencia") && latencia > limite && podeRegistrarLatencia && contLatencia >= 3) {
-                        String sqlInsertAlertaLatencia = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                                "(?, ?, ?)";
-                        template.update(sqlInsertAlertaLatencia, dataHoraColeta, latencia, 9);
+                        String sqlInsertAlertaRede = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoLatencia, fkComponenteRede);
                         podeRegistrarLatencia = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta REDE - LATÊNCIA: " + latencia + "ms (milissegundos)";
+                        String msgJira = "Alerta REDE - LATÊNCIA: " + latencia + "ms (milissegundos)" + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -539,14 +564,11 @@ public class Alerta {
                     Double limite = sc.getLimite();
 
                     if (tipoComponente.equalsIgnoreCase("perdapacote") && perdaPacote > limite && podeRegistrarPerdaPacote && contPerdaPacote >= 3) {
-                        String sqlInsertAlertaPerda = "insert into alerta (data_alerta, registro, fkComponente) values" +
-                                "(?, ?, ?)";
-                        template.update(sqlInsertAlertaPerda, dataHoraColeta, perdaPacote, 10);
+                        String sqlInsertAlertaRede = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoPerda, fkComponenteRede);
                         podeRegistrarPerdaPacote = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta REDE - PERDA DE PACOTES: " + perdaPacote + "%";
+                        String msgJira = "Alerta REDE - PERDA DE PACOTES: " + perdaPacote + "%" + "  -  " + dataHoraColeta;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -607,7 +629,7 @@ public class Alerta {
     public void abrirChamadoJira(String msgJira) {
         String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";
         String email = "vitalview.sptech@gmail.com";
-        String apiToken = "SEU_TOKEN_AQUI";
+        String apiToken = "JIRA_TOKEN_AQUI";
 
         String credentials = email + ":" + apiToken;
         String basicAuth = "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());

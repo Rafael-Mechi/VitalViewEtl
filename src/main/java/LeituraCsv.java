@@ -251,11 +251,19 @@ public class LeituraCsv {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
-        System.out.println("Pegando informações de hostname, limite do componente de cada componente...");
-        String sqlSelect = "select s.hostname, c.limite, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1'";
+        System.out.println("Pegando informações de hostname, limite do componente de cada componente e da Rede...");
+        String sqlSelect =
+                "select s.hostname, c.limite, t.nome " +
+                        "from componentes c " +
+                        "inner join servidores s on c.fkServidor = s.idServidor " +
+                        "inner join tipoComponente t on t.idTipo = c.fkTipo " +
+                        "where s.hostname = 'srv1' " +
+                        "union all " +
+                        "select s.hostname, lr.limite, r.metrica as nome " +
+                        "from limiteRede lr " +
+                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+                        "inner join rede r on r.idRede = lr.fkRede " +
+                        "where s.hostname = 'srv1'";
         List<ServidorComponente> capturas = template.query(sqlSelect, new BeanPropertyRowMapper<>(ServidorComponente.class));
 
 
