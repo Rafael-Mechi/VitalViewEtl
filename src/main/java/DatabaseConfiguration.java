@@ -9,8 +9,8 @@ public class DatabaseConfiguration {
         BasicDataSource dataSource = new BasicDataSource();
         dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         dataSource.setUrl("jdbc:mysql://localhost:3306/VitalView?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
-        dataSource.setUsername("aluno");
-        dataSource.setPassword("sptech");
+        dataSource.setUsername("root");
+        dataSource.setPassword("#CacauLindo13");
         this.template = new JdbcTemplate(dataSource);
     }
 
