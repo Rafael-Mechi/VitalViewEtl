@@ -23,7 +23,7 @@ public class Alerta {
     private Integer registro;
     private Integer fkComponente;
 
-    // Códigos das métricas de rede (1 a 7)
+    // Códigos das métricas
     private Integer codigoDown = 1;
     private Integer codigoUp = 2;
     private Integer codigoIn = 3;
@@ -31,8 +31,12 @@ public class Alerta {
     private Integer codigoConexao = 5;
     private Integer codigoLatencia = 6;
     private Integer codigoPerda = 7;
+    private Integer codigoTaxaLeitura = 8;
+    private Integer codigotaxaEscrita = 9;
+    private Integer codigoLatenciaDisco = 10;
 
-    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente, Integer codigoDown, Integer codigoUp, Integer codigoIn, Integer codigoOut, Integer codigoConexao, Integer codigoLatencia, Integer codigoPerda) {
+
+    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente, Integer codigoDown, Integer codigoUp, Integer codigoIn, Integer codigoOut, Integer codigoConexao, Integer codigoLatencia, Integer codigoPerda, Integer codigoTaxaLeitura, Integer codigotaxaEscrita, Integer codigoLatenciaDisco) {
         this.dataAlerta = dataAlerta;
         this.registro = registro;
         this.fkComponente = fkComponente;
@@ -43,12 +47,9 @@ public class Alerta {
         this.codigoConexao = codigoConexao;
         this.codigoLatencia = codigoLatencia;
         this.codigoPerda = codigoPerda;
-    }
-
-    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {
-        this.dataAlerta = dataAlerta;
-        this.registro = registro;
-        this.fkComponente = fkComponente;
+        this.codigoTaxaLeitura = codigoTaxaLeitura;
+        this.codigotaxaEscrita = codigotaxaEscrita;
+        this.codigoLatenciaDisco = codigoLatenciaDisco;
     }
 
     public Alerta() {
@@ -99,70 +100,73 @@ public class Alerta {
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
                 "where hostname = 'srv1' and t.nome = 'Disco'";
 
-        String sqlSelectTaxaleitura = "select c.limiteLeitura, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Disco'";
+        String sqlSelectTaxaleitura = "select lm.limite, m.metrica as nome " +
+                "from limiteMetrica lm " +
+                "inner join servidores s on lm.fkServidor = s.idServidor " +
+                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                "where s.hostname = 'srv1' and m.metrica = 'TaxaLeitura'";
 
-        String sqlSelectTaxaEscrita = "select c.limiteEscrita, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Disco'";
+        String sqlSelectTaxaEscrita = "select lm.limite, m.metrica as nome " +
+                "from limiteMetrica lm " +
+                "inner join servidores s on lm.fkServidor = s.idServidor " +
+                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                "where s.hostname = 'srv1' and m.metrica = 'TaxaEscrita'";
 
-        String sqlSelectLatenciaDisco = "select c.limiteLatenciaDisco, t.nome from componentes c\n" +
-                "inner join servidores s on c.fkServidor = s.idServidor\n" +
-                "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Disco'";
+        String sqlSelectLatenciaDisco = "select lm.limite, m.metrica as nome " +
+                "from limiteMetrica lm " +
+                "inner join servidores s on lm.fkServidor = s.idServidor " +
+                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                "where s.hostname = 'srv1' and m.metrica = 'LatenciaDisco'";
 
         //SELECTS REDE
         String sqlSelectDown =
-                "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'Download'";
+                "select lm.limite, m.metrica as nome " +
+                        "from limiteMetrica lm " +
+                        "inner join servidores s on lm.fkServidor = s.idServidor " +
+                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                        "where s.hostname = 'srv1' and m.metrica = 'Download'";
 
         String sqlSelectUpload =
-                "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'Upload'";
+                "select lm.limite, m.metrica as nome " +
+                        "from limiteMetrica lm " +
+                        "inner join servidores s on lm.fkServidor = s.idServidor " +
+                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                        "where s.hostname = 'srv1' and m.metrica = 'Upload'";
 
         String sqlSelectPacoteIn =
-                "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'PacoteIn'";
+                "select lm.limite, m.metrica as nome " +
+                        "from limiteMetrica lm " +
+                        "inner join servidores s on lm.fkServidor = s.idServidor " +
+                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                        "where s.hostname = 'srv1' and m.metrica = 'PacoteIn'";
 
         String sqlSelectPacoteOut =
-                "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'PacoteOut'";
+                "select lm.limite, m.metrica as nome " +
+                        "from limiteMetrica lm " +
+                        "inner join servidores s on lm.fkServidor = s.idServidor " +
+                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                        "where s.hostname = 'srv1' and m.metrica = 'PacoteOut'";
 
         String sqlSelectConexao =
-                "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'Conexao'";
+                "select lm.limite, m.metrica as nome " +
+                        "from limiteMetrica lm " +
+                        "inner join servidores s on lm.fkServidor = s.idServidor " +
+                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                        "where s.hostname = 'srv1' and m.metrica = 'Conexao'";
 
         String sqlSelectLatencia =
-                "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'Latencia'";
+                "select lm.limite, m.metrica as nome " +
+                        "from limiteMetrica lm " +
+                        "inner join servidores s on lm.fkServidor = s.idServidor " +
+                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                        "where s.hostname = 'srv1' and m.metrica = 'Latencia'";
 
         String sqlSelectPerdaPacote =
-                "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'PerdaPacote'";
+                "select lm.limite, m.metrica as nome " +
+                        "from limiteMetrica lm " +
+                        "inner join servidores s on lm.fkServidor = s.idServidor " +
+                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                        "where s.hostname = 'srv1' and m.metrica = 'PerdaPacote'";
 
 
         List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class));
@@ -232,10 +236,10 @@ public class Alerta {
             Double primeiroRegistroCpu = Double.valueOf(registro[2]);
             Double primeiroRegistroRam = Double.valueOf(registro[3]);
             Double primeiroRegistroDisco = Double.valueOf(registro[6]);
-            Double primeiroRegistroTaxaLeitura = Double.valueOf(registro[9]);
-            Double primeiroRegistroTaxaEscrita = Double.valueOf(registro[10]);
-            Double primeiroRegistroLatenciaLeitura = Double.valueOf(registro[11]);
-            Double primeiroRegistroLatenciaEscrita = Double.valueOf(registro[12]);
+            Double primeiroRegistroTaxaLeitura = Double.valueOf(registro[10]);
+            Double primeiroRegistroTaxaEscrita = Double.valueOf(registro[11]);
+            Double primeiroRegistroLatenciaLeitura = Double.valueOf(registro[12]);
+            Double primeiroRegistroLatenciaEscrita = Double.valueOf(registro[13]);
             Double primeiroRegistroDown = Double.valueOf(registro[16]);
             Double primeiroRegistroUp = Double.valueOf(registro[17]);
             Long primeiroRegistroIn = Long.valueOf(registro[18]);
@@ -462,7 +466,7 @@ public class Alerta {
                 }
 
                 if (contLatenciaDisco == 3) {
-                    podeResgistrarLatenciaDisco = true;
+                    podeResgistrarTaxaEscrita = true;
                 }
 
                 if (contDown == 3) {
@@ -552,20 +556,57 @@ public class Alerta {
                     Double limite = sc.getLimite();
 
                     if (tipoComponente.equalsIgnoreCase("taxaLeitura") && taxaLeitura > limite && podeResgistrarTaxaLeitura && contTaxaLeitura >= 3) {
-                        String sqlInsertAlertaRede = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
-                        //ENTENDER ESSA PARTE abaixo:
-                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoDown, fkComponenteRede);
-                        podeRegistrarDown = false;
+                        String sqlInsertAlertaTaxaLeitura = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaTaxaLeitura, dataHoraColeta, codigoTaxaLeitura, fkComponenteRede);
+                        podeResgistrarTaxaLeitura = false;
 
                         // Detalhe no Jira
                         String msgJira = "Alerta de desempenho no disco detectado. "
                                 + "Taxa de leitura registrada: " + taxaLeitura + " MB/s. "
-                                + "Servidor: " + /*hostname + */  ". "
+                                + "Servidor: " + nomeDaMaquina +   ". "
                                 + "Data/Hora da coleta: " + dataHoraColeta + ". "
                                 + "Atenção: valores acima do limite configurado podem indicar risco de degradação de performance.";
                         abrirChamadoJira(msgJira);
                     }
 
+                }
+
+                for (ServidorComponente sc : capturaLimiteTaxaEscrita) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("taxaEscrita") && taxaEscrita > limite && podeResgistrarTaxaEscrita && contTaxaEscrita >= 3) {
+                        String sqlInsertAlertaTaxaEscrita = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaTaxaEscrita, dataHoraColeta, codigotaxaEscrita, fkComponenteRede);
+                        podeResgistrarTaxaEscrita = false;
+
+                        // Detalhe no Jira
+                        String msgJira = "Alerta de desempenho no disco detectado. "
+                                + "Taxa de escrita registrada: " + taxaEscrita + " MB/s. "
+                                + "Servidor: " + nomeDaMaquina +   ". "
+                                + "Data/Hora da coleta: " + dataHoraColeta + ". "
+                                + "Atenção: valores acima do limite configurado podem indicar risco de degradação de performance.";
+                        abrirChamadoJira(msgJira);
+                    }
+                }
+
+                for (ServidorComponente sc : capturaLimiteLatenciaDisco) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("latenciaDisco") && latenciaDiscoLeitura > limite && latenciaDiscoEscrita > limite && podeResgistrarLatenciaDisco && contLatenciaDisco >= 3) {
+                        String sqlInsertAlertaLatenciaDisco = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaLatenciaDisco, dataHoraColeta, codigoLatenciaDisco, fkComponenteRede);
+                        podeResgistrarLatenciaDisco = false;
+
+                        // Detalhe no Jira
+                        String msgJira = "Alerta de desempenho no disco detectado. "
+                                + "Latência de Disco registrada: " + "Escrita: " + latenciaDiscoEscrita + " MB/s - Leitura " + latenciaDiscoLeitura + "MB/s"
+                                + "Servidor: " + nomeDaMaquina +   ". "
+                                + "Data/Hora da coleta: " + dataHoraColeta + ". "
+                                + "Atenção: valores acima do limite configurado podem indicar risco de degradação de performance.";
+                        abrirChamadoJira(msgJira);
+                    }
                 }
 
                 //ALERTAS REDE
@@ -731,7 +772,7 @@ public class Alerta {
     public void abrirChamadoJira(String msgJira) {
         String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";
         String email = "vitalview.sptech@gmail.com";
-        String apiToken = "JIRA_TOKEN_AQUI";
+        String apiToken = "TOKEN JIRA AQUI";
 
         String credentials = email + ":" + apiToken;
         String basicAuth = "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
@@ -778,6 +819,4 @@ public class Alerta {
             System.out.println(e);
         }
     }
-
-
 }
