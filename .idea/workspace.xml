@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rede/rede.json" beforeDir="false" afterPath="$PROJECT_DIR$/rede/rede.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/FiltroJsonETL.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/FiltroJsonETL.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/MainFiltro.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/MainFiltro.java" afterDir="false" />
-    </list>
+    <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -41,6 +36,9 @@
   &quot;associatedIndex&quot;: 4
 }</component>
   <component name="ProjectId" id="342VRdCqfWANMzL7FSZwpt2qF3j" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />

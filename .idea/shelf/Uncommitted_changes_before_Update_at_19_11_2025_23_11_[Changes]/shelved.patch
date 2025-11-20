@@ -1,0 +1,2906 @@
+Index: src/main/java/Alerta.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import okhttp3.*;\r\nimport org.springframework.jdbc.core.BeanPropertyRowMapper;\r\nimport org.springframework.jdbc.core.JdbcTemplate;\r\n\r\nimport java.io.*;\r\nimport java.time.LocalDateTime;\r\nimport java.util.Base64;\r\nimport java.util.List;\r\n\r\n//importações slack\r\n//import com.slack.api.Slack;\r\n//import com.slack.api.methods.SlackApiException;\r\n//import com.slack.api.methods.request.chat.ChatPostMessageRequest;\r\n//import com.slack.api.methods.response.chat.ChatPostMessageResponse;\r\n\r\n//imports jira\r\nimport java.io.IOException;\r\n//import java.util.Base64;\r\n//import java.io.IOException;\r\n\r\npublic class Alerta {\r\n    private LocalDateTime dataAlerta;\r\n    private Integer registro;\r\n    private Integer fkComponente;\r\n\r\n    // Códigos das métricas de rede (1 a 7)\r\n    private Integer codigoDown = 1;\r\n    private Integer codigoUp = 2;\r\n    private Integer codigoIn = 3;\r\n    private Integer codigoOut = 4;\r\n    private Integer codigoConexao = 5;\r\n    private Integer codigoLatencia = 6;\r\n    private Integer codigoPerda = 7;\r\n\r\n    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente, Integer codigoDown, Integer codigoUp, Integer codigoIn, Integer codigoOut, Integer codigoConexao, Integer codigoLatencia, Integer codigoPerda) {\r\n        this.dataAlerta = dataAlerta;\r\n        this.registro = registro;\r\n        this.fkComponente = fkComponente;\r\n        this.codigoDown = codigoDown;\r\n        this.codigoUp = codigoUp;\r\n        this.codigoIn = codigoIn;\r\n        this.codigoOut = codigoOut;\r\n        this.codigoConexao = codigoConexao;\r\n        this.codigoLatencia = codigoLatencia;\r\n        this.codigoPerda = codigoPerda;\r\n    }\r\n\r\n    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {\r\n        this.dataAlerta = dataAlerta;\r\n        this.registro = registro;\r\n        this.fkComponente = fkComponente;\r\n    }\r\n\r\n    public Alerta() {\r\n    }\r\n\r\n    public LocalDateTime getDataAlerta() {\r\n        return dataAlerta;\r\n    }\r\n\r\n    public void setDataAlerta(LocalDateTime dataAlerta) {\r\n        this.dataAlerta = dataAlerta;\r\n    }\r\n\r\n    public Integer getRegistro() {\r\n        return registro;\r\n    }\r\n\r\n    public void setRegistro(Integer registro) {\r\n        this.registro = registro;\r\n    }\r\n\r\n    public Integer getFkComponente() {\r\n        return fkComponente;\r\n    }\r\n\r\n    public void setFkComponente(Integer fkComponente) {\r\n        this.fkComponente = fkComponente;\r\n    }\r\n\r\n    public void salvaTabelaAlerta(String nomeArq) {\r\n        DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();\r\n        JdbcTemplate template = databaseConfiguration.getTemplate();\r\n\r\n        System.out.println(\"Pegando informações dos limites do servidor 'srv1'\");\r\n        String sqlSelectCpu = \"select c.limite, t.nome from componentes c\\n\" +\r\n                \"inner join servidores s on c.fkServidor = s.idServidor\\n\" +\r\n                \"inner join tipoComponente t on t.idTipo = c.fkTipo\\n\" +\r\n                \"where hostname = 'srv1' and  t.nome = 'Cpu'\";\r\n\r\n        String sqlSelectRam = \"select c.limite, t.nome from componentes c\\n\" +\r\n                \"inner join servidores s on c.fkServidor = s.idServidor\\n\" +\r\n                \"inner join tipoComponente t on t.idTipo = c.fkTipo\\n\" +\r\n                \"where hostname = 'srv1' and t.nome = 'Memória'\";\r\n\r\n        String sqlSelectDisco = \"select c.limite, t.nome from componentes c\\n\" +\r\n                \"inner join servidores s on c.fkServidor = s.idServidor\\n\" +\r\n                \"inner join tipoComponente t on t.idTipo = c.fkTipo\\n\" +\r\n                \"where hostname = 'srv1' and t.nome = 'Disco'\";\r\n\r\n        String sqlSelectDown =\r\n                \"select lr.limite, r.metrica as nome \" +\r\n                        \"from limiteRede lr \" +\r\n                        \"inner join servidores s on lr.fkServidor = s.idServidor \" +\r\n                        \"inner join rede r on r.idRede = lr.fkRede \" +\r\n                        \"where s.hostname = 'srv1' and r.metrica = 'Download'\";\r\n\r\n        String sqlSelectUpload =\r\n                \"select lr.limite, r.metrica as nome \" +\r\n                        \"from limiteRede lr \" +\r\n                        \"inner join servidores s on lr.fkServidor = s.idServidor \" +\r\n                        \"inner join rede r on r.idRede = lr.fkRede \" +\r\n                        \"where s.hostname = 'srv1' and r.metrica = 'Upload'\";\r\n\r\n        String sqlSelectPacoteIn =\r\n                \"select lr.limite, r.metrica as nome \" +\r\n                        \"from limiteRede lr \" +\r\n                        \"inner join servidores s on lr.fkServidor = s.idServidor \" +\r\n                        \"inner join rede r on r.idRede = lr.fkRede \" +\r\n                        \"where s.hostname = 'srv1' and r.metrica = 'PacoteIn'\";\r\n\r\n        String sqlSelectPacoteOut =\r\n                \"select lr.limite, r.metrica as nome \" +\r\n                        \"from limiteRede lr \" +\r\n                        \"inner join servidores s on lr.fkServidor = s.idServidor \" +\r\n                        \"inner join rede r on r.idRede = lr.fkRede \" +\r\n                        \"where s.hostname = 'srv1' and r.metrica = 'PacoteOut'\";\r\n\r\n        String sqlSelectConexao =\r\n                \"select lr.limite, r.metrica as nome \" +\r\n                        \"from limiteRede lr \" +\r\n                        \"inner join servidores s on lr.fkServidor = s.idServidor \" +\r\n                        \"inner join rede r on r.idRede = lr.fkRede \" +\r\n                        \"where s.hostname = 'srv1' and r.metrica = 'Conexao'\";\r\n\r\n        String sqlSelectLatencia =\r\n                \"select lr.limite, r.metrica as nome \" +\r\n                        \"from limiteRede lr \" +\r\n                        \"inner join servidores s on lr.fkServidor = s.idServidor \" +\r\n                        \"inner join rede r on r.idRede = lr.fkRede \" +\r\n                        \"where s.hostname = 'srv1' and r.metrica = 'Latencia'\";\r\n\r\n        String sqlSelectPerdaPacote =\r\n                \"select lr.limite, r.metrica as nome \" +\r\n                        \"from limiteRede lr \" +\r\n                        \"inner join servidores s on lr.fkServidor = s.idServidor \" +\r\n                        \"inner join rede r on r.idRede = lr.fkRede \" +\r\n                        \"where s.hostname = 'srv1' and r.metrica = 'PerdaPacote'\";\r\n\r\n\r\n        List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimiteRam = template.query(sqlSelectRam, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimiteDisco = template.query(sqlSelectDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimiteDown = template.query(sqlSelectDown, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimiteUpload = template.query(sqlSelectUpload, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimitePacoteIn = template.query(sqlSelectPacoteIn, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimitePacoteOut = template.query(sqlSelectPacoteOut, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimiteConexao = template.query(sqlSelectConexao, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimiteLatencia = template.query(sqlSelectLatencia, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n        List<ServidorComponente> capturaLimitePerdaPacote = template.query(sqlSelectPerdaPacote, new BeanPropertyRowMapper<>(ServidorComponente.class));\r\n\r\n        Double limiteCpu = capturaLimiteCpu.get(0).getLimite();\r\n        Double limiteRam = capturaLimiteRam.get(0).getLimite();\r\n        Double limiteDisco = capturaLimiteDisco.get(0).getLimite();\r\n        Double limiteDown = capturaLimiteDown.get(0).getLimite();\r\n        Double limiteUp = capturaLimiteUpload.get(0).getLimite();\r\n        Double limiteIn = capturaLimitePacoteIn.get(0).getLimite();\r\n        Double limiteOut = capturaLimitePacoteOut.get(0).getLimite();\r\n        Double limiteConexao = capturaLimiteConexao.get(0).getLimite();\r\n        Double limiteLatencia = capturaLimiteLatencia.get(0).getLimite();\r\n        Double limitePerdaPacote = capturaLimitePerdaPacote.get(0).getLimite();\r\n\r\n        String sqlSelectCompRede =\r\n                \"select c.idComponente \" +\r\n                        \"from componentes c \" +\r\n                        \"join servidores s on c.fkServidor = s.idServidor \" +\r\n                        \"join tipoComponente t on t.idTipo = c.fkTipo \" +\r\n                        \"where s.hostname = 'srv1' and t.nome = 'Rede'\";\r\n\r\n        Integer fkComponenteRede = template.queryForObject(sqlSelectCompRede, Integer.class);\r\n\r\n        Reader arq = null;\r\n        BufferedReader entrada = null;\r\n        // Bloco try-catch para abrir o arquivo\r\n        try {\r\n            arq = new InputStreamReader(new FileInputStream(nomeArq), \"UTF-8\");\r\n\r\n            entrada = new BufferedReader(arq);\r\n        } catch (IOException erro) {\r\n            System.out.println(\"Erro na abertura do arquivo\");\r\n            System.exit(1);\r\n        }\r\n\r\n        System.out.println(\"Lendo o csv e escrevendo a saída\");\r\n\r\n        try {\r\n            String[] registro;      // registro eh um vetor que armazenara cada parte da linha do arquivo\r\n            // readLine() eh usado   para ler uma linha inteira do arquivo\r\n            // Le a primeira linha do arquivo, que eh o cabecalho\r\n            String linha = entrada.readLine(); // linha eh a primeira linha do arquivo\r\n\r\n            // separa cada item da linha usando o delimitador ;\r\n            registro = linha.split(\";\");\r\n\r\n            // Le a segunda linha do arquivo (1a linha de dados)\r\n            linha = entrada.readLine();\r\n            registro = linha.split(\";\");\r\n\r\n            Double primeiroRegistroCpu = Double.valueOf(registro[2]);\r\n            Double primeiroRegistroRam = Double.valueOf(registro[3]);\r\n            Double primeiroRegistroDisco = Double.valueOf(registro[6]);\r\n            Double primeiroRegistroDown = Double.valueOf(registro[16]);\r\n            Double primeiroRegistroUp = Double.valueOf(registro[17]);\r\n            Long primeiroRegistroIn = Long.valueOf(registro[18]);\r\n            Long primeiroRegistroOut = Long.valueOf(registro[19]);\r\n            Integer primeiroRegistroConexao = Integer.valueOf(registro[20]);\r\n            Double primeiroRegistroLatencia = Double.valueOf(registro[21]);\r\n            Double primeiroRegistroPerdaPacote;\r\n            if (registro.length > 22 && registro[22] != null && !registro[22].isEmpty()) {\r\n                primeiroRegistroPerdaPacote = Double.valueOf(registro[22]);\r\n            } else {\r\n                primeiroRegistroPerdaPacote = 0.0;\r\n            }\r\n\r\n            Boolean podeRegistrarCpu = false;\r\n            Boolean podeRegistrarRam = false;\r\n            Boolean podeRegistrarDisco = false;\r\n            Boolean podeRegistrarDown = false;\r\n            Boolean podeRegistrarUp = false;\r\n            Boolean podeRegistrarIn = false;\r\n            Boolean podeRegistrarOut = false;\r\n            Boolean podeRegistrarConexao = false;\r\n            Boolean podeRegistrarLatencia = false;\r\n            Boolean podeRegistrarPerdaPacote = false;\r\n\r\n            Integer contCpu = 0;\r\n            Integer contRam = 0;\r\n            Integer contDisco = 0;\r\n            Integer contDown = 0;\r\n            Integer contUp = 0;\r\n            Integer contIn = 0;\r\n            Integer contOut = 0;\r\n            Integer contConexao = 0;\r\n            Integer contLatencia = 0;\r\n            Integer contPerdaPacote = 0;\r\n\r\n            // verificando se o uso de cpu da primeira linha ultrapassa o limite\r\n            if (primeiroRegistroCpu > limiteCpu) {\r\n                contCpu++;\r\n            }\r\n\r\n            // ram...\r\n            if (primeiroRegistroRam > limiteRam) {\r\n                contRam++;\r\n            }\r\n\r\n            // disco...\r\n            if (primeiroRegistroDisco > limiteDisco) {\r\n                contDisco++;\r\n            }\r\n\r\n            if (primeiroRegistroDown > limiteDown) {\r\n                contDown++;\r\n            }\r\n\r\n            if (primeiroRegistroUp > limiteUp) {\r\n                contUp++;\r\n            }\r\n\r\n            if (primeiroRegistroIn > (limiteIn * 1000)) {\r\n                contIn++;\r\n            }\r\n\r\n            if (primeiroRegistroOut > (limiteOut * 1000)) {\r\n                contOut++;\r\n            }\r\n\r\n            if (primeiroRegistroConexao > limiteConexao) {\r\n                contConexao++;\r\n            }\r\n\r\n            if (primeiroRegistroLatencia > limiteLatencia) {\r\n                contLatencia++;\r\n            }\r\n\r\n            if (primeiroRegistroPerdaPacote > limitePerdaPacote) {\r\n                contPerdaPacote++;\r\n            }\r\n\r\n            while (linha != null) { // enquanto nao chegou ao final do arquivo\r\n                registro = linha.split(\";\");\r\n                // converte de String para Integer usando Integer.valueOf\r\n                // Se fosse converter de String para int usa-se Integer.parseInt\r\n                String nomeDaMaquina = registro[1];\r\n                String dataHoraColeta = registro[0];\r\n                Double usoCPU = Double.valueOf(registro[2]);\r\n                Double usoRAM = Double.valueOf(registro[3]);\r\n                Double usoDisco = Double.valueOf(registro[6]);\r\n                Double netDown = Double.valueOf(registro[16]);\r\n                Double netUp = Double.valueOf(registro[17]);\r\n                Long pacotesIn = Long.valueOf(registro[18]);\r\n                Long pacotesOut = Long.valueOf(registro[19]);\r\n                Integer conexoes = Integer.valueOf(registro[20]);\r\n                Double latencia = Double.valueOf(registro[21]);\r\n                Double perdaPacote;\r\n                if (registro.length > 22 && registro[22] != null && !registro[22].isEmpty()) {\r\n                    perdaPacote = Double.valueOf(registro[22]);\r\n                } else {\r\n                    perdaPacote = 0.0;\r\n                }\r\n\r\n\r\n                //Contagem de registros possíveis alertas.\r\n                if (usoCPU < limiteCpu) {\r\n                    contCpu = 0;\r\n                } else {\r\n                    contCpu++;\r\n                }\r\n\r\n                if (usoRAM < limiteRam) {\r\n                    contRam = 0;\r\n                } else {\r\n                    contRam++;\r\n                }\r\n\r\n                if (usoDisco < limiteDisco) {\r\n                    contDisco = 0;\r\n                } else {\r\n                    contDisco++;\r\n                }\r\n\r\n                if (netDown < limiteDown) {\r\n                    contDown = 0;\r\n                } else {\r\n                    contDown++;\r\n                }\r\n\r\n                if (netUp < limiteUp) {\r\n                    contUp = 0;\r\n                } else {\r\n                    contUp++;\r\n                }\r\n\r\n                if (pacotesIn < (limiteIn * 1000)) {\r\n                    contIn = 0;\r\n                } else {\r\n                    contIn++;\r\n                }\r\n\r\n                if (pacotesOut < (limiteOut * 1000)) {\r\n                    contOut = 0;\r\n                } else {\r\n                    contOut++;\r\n                }\r\n\r\n                if (conexoes < limiteConexao) {\r\n                    contConexao = 0;\r\n                } else {\r\n                    contConexao++;\r\n                }\r\n\r\n                if (latencia < limiteLatencia) {\r\n                    contLatencia = 0;\r\n                } else {\r\n                    contLatencia++;\r\n                }\r\n\r\n                if (perdaPacote < limitePerdaPacote) {\r\n                    contPerdaPacote = 0;\r\n                } else {\r\n                    contPerdaPacote++;\r\n                }\r\n\r\n                //Verificando veracidade de alerta, mais que 3 registros.\r\n\r\n                if (contCpu == 3) {\r\n                    podeRegistrarCpu = true;\r\n                }\r\n\r\n                if (contRam == 3) {\r\n                    podeRegistrarRam = true;\r\n                }\r\n\r\n                if (contDisco == 3) {\r\n                    podeRegistrarDisco = true;\r\n                }\r\n\r\n                if (contDown == 3) {\r\n                    podeRegistrarDown = true;\r\n                }\r\n\r\n                if (contUp == 3) {\r\n                    podeRegistrarUp = true;\r\n                }\r\n\r\n                if (contIn == 3) {\r\n                    podeRegistrarIn = true;\r\n                }\r\n\r\n                if (contOut == 3) {\r\n                    podeRegistrarOut = true;\r\n                }\r\n\r\n                if (contConexao == 3) {\r\n                    podeRegistrarConexao = true;\r\n                }\r\n\r\n                if (contLatencia == 3) {\r\n                    podeRegistrarLatencia = true;\r\n                }\r\n\r\n                if (contPerdaPacote == 3) {\r\n                    podeRegistrarPerdaPacote = true;\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimiteCpu) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"cpu\") && usoCPU > limite && podeRegistrarCpu) {\r\n                        String sqlInsertAlertaCpu = \"insert into alerta (data_alerta, registro, fkComponente) values\" +\r\n                                \"(?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaCpu, dataHoraColeta, usoCPU, 1);\r\n                        podeRegistrarCpu = false;\r\n\r\n//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);\r\n\r\n                        String msgJira = \"Alerta CPU: \" + usoCPU + \"%\" + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimiteRam) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"memória\") && usoRAM > limite && podeRegistrarRam && contRam >= 3) {\r\n                        String sqlInsertAlertaRam = \"insert into alerta (data_alerta, registro, fkComponente) values\" +\r\n                                \"(?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaRam, dataHoraColeta, usoRAM, 2);\r\n                        podeRegistrarRam = false;\r\n\r\n//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);\r\n\r\n                        String msgJira = \"Alerta RAM: \" + usoRAM + \"%\" + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimiteDisco) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"disco\") && usoDisco > limite && podeRegistrarDisco && contDisco >= 3) {\r\n                        String sqlInsertAlertaDisco = \"insert into alerta (data_alerta, registro, fkComponente) values\" +\r\n                                \"(?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaDisco, dataHoraColeta, usoDisco, 3);\r\n                        podeRegistrarDisco = false;\r\n\r\n//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);\r\n\r\n                        String msgJira = \"Alerta DISCO: \" + usoDisco + \"%\" + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimiteDown) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"download\") && netDown > limite && podeRegistrarDown && contDown >= 3) {\r\n                        String sqlInsertAlertaRede = \"insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)\";\r\n                        // registro = 1 (Download), fkComponente = Rede\r\n                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoDown, fkComponenteRede);\r\n                        podeRegistrarDown = false;\r\n\r\n                        // Detalhe no Jira\r\n                        String msgJira = \"Alerta REDE - VELOCIDADE DOWNLOAD: \" + netDown + \"Mbps\" + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimiteUpload) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"upload\") && netUp > limite && podeRegistrarUp && contUp >= 3) {\r\n                        String sqlInsertAlertaRede = \"insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoUp, fkComponenteRede);\r\n                        podeRegistrarUp = false;\r\n\r\n                        String msgJira = \"Alerta REDE - VELOCIDADE UPLOAD: \" + netUp + \"Mbps\" + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimitePacoteIn) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"pacotein\") && pacotesIn > (limite * 1000) && podeRegistrarIn && contIn >= 3) {\r\n                        String sqlInsertAlertaRede = \"insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoIn, fkComponenteRede);\r\n                        podeRegistrarIn = false;\r\n\r\n                        String msgJira = \"Alerta REDE - ENTRADA DE PACOTES: \" + pacotesIn + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimitePacoteOut) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"pacoteout\") && pacotesOut > (limite * 1000) && podeRegistrarOut && contOut >= 3) {\r\n                        String sqlInsertAlertaRede = \"insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoOut, fkComponenteRede);\r\n                        podeRegistrarOut = false;\r\n\r\n                        String msgJira = \"Alerta REDE - SAÍDA DE PACOTES: \" + pacotesOut + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimiteConexao) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"conexao\") && conexoes > limite && podeRegistrarConexao && contConexao >= 3) {\r\n                        String sqlInsertAlertaRede = \"insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoConexao, fkComponenteRede);\r\n                        podeRegistrarConexao = false;\r\n\r\n                        String msgJira = \"Alerta REDE - CONEXÕES NA REDE: \" + conexoes + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimiteLatencia) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"latencia\") && latencia > limite && podeRegistrarLatencia && contLatencia >= 3) {\r\n                        String sqlInsertAlertaRede = \"insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoLatencia, fkComponenteRede);\r\n                        podeRegistrarLatencia = false;\r\n\r\n                        String msgJira = \"Alerta REDE - LATÊNCIA: \" + latencia + \"ms (milissegundos)\" + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n\r\n                for (ServidorComponente sc : capturaLimitePerdaPacote) {\r\n                    String tipoComponente = sc.getNome();\r\n                    Double limite = sc.getLimite();\r\n\r\n                    if (tipoComponente.equalsIgnoreCase(\"perdapacote\") && perdaPacote > limite && podeRegistrarPerdaPacote && contPerdaPacote >= 3) {\r\n                        String sqlInsertAlertaRede = \"insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)\";\r\n                        template.update(sqlInsertAlertaRede, dataHoraColeta, codigoPerda, fkComponenteRede);\r\n                        podeRegistrarPerdaPacote = false;\r\n\r\n                        String msgJira = \"Alerta REDE - PERDA DE PACOTES: \" + perdaPacote + \"%\" + \"  -  \" + dataHoraColeta;\r\n                        abrirChamadoJira(msgJira);\r\n                    }\r\n\r\n                }\r\n                // Le a proxima linha do arquivo\r\n                linha = entrada.readLine();\r\n            } // final do while\r\n        } // final do try\r\n        catch (IOException erro) {\r\n            System.out.println(\"Erro ao ler o arquivo\");\r\n            erro.printStackTrace();\r\n        } finally {\r\n            try {\r\n                entrada.close();\r\n                arq.close();\r\n            } catch (IOException erro) {\r\n                System.out.println(\"Erro ao fechar o arquivo\");\r\n            }\r\n        }\r\n    }\r\n\r\n    //Não utilizaremos mais essa função\r\n\r\n//    public static void enviarAlertaSlack(double cpuPercent, double memPercent, double diskPercent, String\r\n//            timestamp, String hostname, Double limiteCpu, Double limiteRam, Double limiteDisco) {\r\n//\r\n//        if (cpuPercent > limiteCpu || memPercent > limiteRam || diskPercent > limiteDisco) {\r\n//            String alerta = String.format(\r\n//                    \"⚠\uFE0F *Alerta de uso elevado detectado!*\\n\" +\r\n//                            \"\uD83D\uDD52 %s\\n\" +\r\n//                            \"\uD83D\uDC64 Servidor: %s\\n\" +\r\n//                            \"\uD83D\uDCBB CPU: %.2f%%\\n\" +\r\n//                            \"\uD83E\uDDE0 RAM: %.2f%%\\n\" +\r\n//                            \"\uD83D\uDCBE Disco: %.2f%%\",\r\n//                    timestamp, hostname, cpuPercent, memPercent, diskPercent\r\n//            );\r\n//\r\n//            // Cria uma configuração personalizada sem listeners\r\n//            Slack slack = Slack.getInstance();\r\n//\r\n//            try {\r\n//                ChatPostMessageResponse response = slack.methods(SLACK_TOKEN).chatPostMessage(ChatPostMessageRequest.builder()\r\n//                        .channel(CHANNEL)\r\n//                        .text(alerta)\r\n//                        .build());\r\n//\r\n//                if (response.isOk()) {\r\n//                    System.out.println(\"Alerta enviado para o Slack.\");\r\n//                } else {\r\n//                    System.out.println(\"Erro ao enviar alerta: \" + response.getError());\r\n//                }\r\n//            } catch (IOException | SlackApiException e) {\r\n//                System.out.println(\"Exceção ao enviar alerta: \" + e.getMessage());\r\n//            }\r\n//        }\r\n//    }\r\n\r\n    public void abrirChamadoJira(String msgJira) {\r\n        String jiraUrl = \"https://vitalviewsptech.atlassian.net/rest/api/3/issue\";\r\n        String email = \"vitalview.sptech@gmail.com\";\r\n        String apiToken = \"JIRA_TOKEN_AQUI\";\r\n\r\n        String credentials = email + \":\" + apiToken;\r\n        String basicAuth = \"Basic \" + Base64.getEncoder().encodeToString(credentials.getBytes());\r\n\r\n        String json = String.format(\"\"\"\r\n                {\r\n                  \"fields\": {\r\n                    \"project\": { \"key\": \"SUP\" },\r\n                    \"summary\": \"%s\",\r\n                    \"description\": {\r\n                      \"type\": \"doc\",\r\n                      \"version\": 1,\r\n                      \"content\": [\r\n                        {\r\n                          \"type\": \"paragraph\",\r\n                          \"content\": [\r\n                            {\r\n                              \"text\": \"%s\",\r\n                              \"type\": \"text\"\r\n                            }\r\n                          ]\r\n                        }\r\n                      ]\r\n                    },\r\n                    \"issuetype\": { \"name\": \"Reportar um Incidente\" }\r\n                  }\r\n                }\r\n                \"\"\", msgJira, msgJira);\r\n\r\n        OkHttpClient client = new OkHttpClient();\r\n        RequestBody body = RequestBody.create(json, MediaType.parse(\"application/json\"));\r\n        Request request = new Request.Builder()\r\n                .url(jiraUrl)\r\n                .addHeader(\"Authorization\", basicAuth)\r\n                .addHeader(\"Accept\", \"application/json\")\r\n                .post(body)\r\n                .build();\r\n\r\n        try {\r\n            Response response = client.newCall(request).execute();\r\n            System.out.println(\"Status: \" + response.code());\r\n            System.out.println(\"Body: \" + response.body().string());\r\n        } catch (IOException e) {\r\n            System.out.println(e);\r\n        }\r\n    }\r\n\r\n\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/Alerta.java b/src/main/java/Alerta.java
+--- a/src/main/java/Alerta.java	(revision b876a62a064bde8e0147bd4cd0d62f1f5b0dd3f6)
++++ b/src/main/java/Alerta.java	(date 1763604495544)
+@@ -23,7 +23,7 @@
+     private Integer registro;
+     private Integer fkComponente;
+ 
+-    // Códigos das métricas de rede (1 a 7)
++    // Códigos das métricas
+     private Integer codigoDown = 1;
+     private Integer codigoUp = 2;
+     private Integer codigoIn = 3;
+@@ -31,8 +31,12 @@
+     private Integer codigoConexao = 5;
+     private Integer codigoLatencia = 6;
+     private Integer codigoPerda = 7;
++    private Integer codigoTaxaLeitura = 8;
++    private Integer codigotaxaEscrita = 9;
++    private Integer codigoLatenciaDisco = 10;
+ 
+-    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente, Integer codigoDown, Integer codigoUp, Integer codigoIn, Integer codigoOut, Integer codigoConexao, Integer codigoLatencia, Integer codigoPerda) {
++
++    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente, Integer codigoDown, Integer codigoUp, Integer codigoIn, Integer codigoOut, Integer codigoConexao, Integer codigoLatencia, Integer codigoPerda, Integer codigoTaxaLeitura, Integer codigotaxaEscrita, Integer codigoLatenciaDisco) {
+         this.dataAlerta = dataAlerta;
+         this.registro = registro;
+         this.fkComponente = fkComponente;
+@@ -43,12 +47,9 @@
+         this.codigoConexao = codigoConexao;
+         this.codigoLatencia = codigoLatencia;
+         this.codigoPerda = codigoPerda;
+-    }
+-
+-    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {
+-        this.dataAlerta = dataAlerta;
+-        this.registro = registro;
+-        this.fkComponente = fkComponente;
++        this.codigoTaxaLeitura = codigoTaxaLeitura;
++        this.codigotaxaEscrita = codigotaxaEscrita;
++        this.codigoLatenciaDisco = codigoLatenciaDisco;
+     }
+ 
+     public Alerta() {
+@@ -93,64 +94,87 @@
+                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                 "where hostname = 'srv1' and t.nome = 'Memória'";
+ 
++        //SELECTS DISCO:
+         String sqlSelectDisco = "select c.limite, t.nome from componentes c\n" +
+                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
+                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
+                 "where hostname = 'srv1' and t.nome = 'Disco'";
+ 
++        String sqlSelectTaxaleitura = "select lm.limite, m.metrica as nome " +
++                "from limiteMetrica lm " +
++                "inner join servidores s on lm.fkServidor = s.idServidor " +
++                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                "where s.hostname = 'srv1' and m.metrica = 'TaxaLeitura'";
++
++        String sqlSelectTaxaEscrita = "select lm.limite, m.metrica as nome " +
++                "from limiteMetrica lm " +
++                "inner join servidores s on lm.fkServidor = s.idServidor " +
++                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                "where s.hostname = 'srv1' and m.metrica = 'TaxaEscrita'";
++
++        String sqlSelectLatenciaDisco = "select lm.limite, m.metrica as nome " +
++                "from limiteMetrica lm " +
++                "inner join servidores s on lm.fkServidor = s.idServidor " +
++                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                "where s.hostname = 'srv1' and m.metrica = 'LatenciaDisco'";
++
++        //SELECTS REDE
+         String sqlSelectDown =
+-                "select lr.limite, r.metrica as nome " +
+-                        "from limiteRede lr " +
+-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+-                        "inner join rede r on r.idRede = lr.fkRede " +
+-                        "where s.hostname = 'srv1' and r.metrica = 'Download'";
++                "select lm.limite, m.metrica as nome " +
++                        "from limiteMetrica lm " +
++                        "inner join servidores s on lm.fkServidor = s.idServidor " +
++                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                        "where s.hostname = 'srv1' and m.metrica = 'Download'";
+ 
+         String sqlSelectUpload =
+-                "select lr.limite, r.metrica as nome " +
+-                        "from limiteRede lr " +
+-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+-                        "inner join rede r on r.idRede = lr.fkRede " +
+-                        "where s.hostname = 'srv1' and r.metrica = 'Upload'";
++                "select lm.limite, m.metrica as nome " +
++                        "from limiteMetrica lm " +
++                        "inner join servidores s on lm.fkServidor = s.idServidor " +
++                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                        "where s.hostname = 'srv1' and m.metrica = 'Upload'";
+ 
+         String sqlSelectPacoteIn =
+-                "select lr.limite, r.metrica as nome " +
+-                        "from limiteRede lr " +
+-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+-                        "inner join rede r on r.idRede = lr.fkRede " +
+-                        "where s.hostname = 'srv1' and r.metrica = 'PacoteIn'";
++                "select lm.limite, m.metrica as nome " +
++                        "from limiteMetrica lm " +
++                        "inner join servidores s on lm.fkServidor = s.idServidor " +
++                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                        "where s.hostname = 'srv1' and m.metrica = 'PacoteIn'";
+ 
+         String sqlSelectPacoteOut =
+-                "select lr.limite, r.metrica as nome " +
+-                        "from limiteRede lr " +
+-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+-                        "inner join rede r on r.idRede = lr.fkRede " +
+-                        "where s.hostname = 'srv1' and r.metrica = 'PacoteOut'";
++                "select lm.limite, m.metrica as nome " +
++                        "from limiteMetrica lm " +
++                        "inner join servidores s on lm.fkServidor = s.idServidor " +
++                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                        "where s.hostname = 'srv1' and m.metrica = 'PacoteOut'";
+ 
+         String sqlSelectConexao =
+-                "select lr.limite, r.metrica as nome " +
+-                        "from limiteRede lr " +
+-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+-                        "inner join rede r on r.idRede = lr.fkRede " +
+-                        "where s.hostname = 'srv1' and r.metrica = 'Conexao'";
++                "select lm.limite, m.metrica as nome " +
++                        "from limiteMetrica lm " +
++                        "inner join servidores s on lm.fkServidor = s.idServidor " +
++                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                        "where s.hostname = 'srv1' and m.metrica = 'Conexao'";
+ 
+         String sqlSelectLatencia =
+-                "select lr.limite, r.metrica as nome " +
+-                        "from limiteRede lr " +
+-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+-                        "inner join rede r on r.idRede = lr.fkRede " +
+-                        "where s.hostname = 'srv1' and r.metrica = 'Latencia'";
++                "select lm.limite, m.metrica as nome " +
++                        "from limiteMetrica lm " +
++                        "inner join servidores s on lm.fkServidor = s.idServidor " +
++                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                        "where s.hostname = 'srv1' and m.metrica = 'Latencia'";
+ 
+         String sqlSelectPerdaPacote =
+-                "select lr.limite, r.metrica as nome " +
+-                        "from limiteRede lr " +
+-                        "inner join servidores s on lr.fkServidor = s.idServidor " +
+-                        "inner join rede r on r.idRede = lr.fkRede " +
+-                        "where s.hostname = 'srv1' and r.metrica = 'PerdaPacote'";
++                "select lm.limite, m.metrica as nome " +
++                        "from limiteMetrica lm " +
++                        "inner join servidores s on lm.fkServidor = s.idServidor " +
++                        "inner join metrica m on m.idMetrica = lm.fkMetrica " +
++                        "where s.hostname = 'srv1' and m.metrica = 'PerdaPacote'";
+ 
+ 
+         List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class));
+         List<ServidorComponente> capturaLimiteRam = template.query(sqlSelectRam, new BeanPropertyRowMapper<>(ServidorComponente.class));
+         List<ServidorComponente> capturaLimiteDisco = template.query(sqlSelectDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
++        List<ServidorComponente> capturaLimiteTaxaLeitura = template.query(sqlSelectTaxaleitura, new BeanPropertyRowMapper<>(ServidorComponente.class));
++        List<ServidorComponente> capturaLimiteTaxaEscrita = template.query(sqlSelectTaxaEscrita, new BeanPropertyRowMapper<>(ServidorComponente.class));
++        List<ServidorComponente> capturaLimiteLatenciaDisco = template.query(sqlSelectLatenciaDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
+         List<ServidorComponente> capturaLimiteDown = template.query(sqlSelectDown, new BeanPropertyRowMapper<>(ServidorComponente.class));
+         List<ServidorComponente> capturaLimiteUpload = template.query(sqlSelectUpload, new BeanPropertyRowMapper<>(ServidorComponente.class));
+         List<ServidorComponente> capturaLimitePacoteIn = template.query(sqlSelectPacoteIn, new BeanPropertyRowMapper<>(ServidorComponente.class));
+@@ -162,6 +186,9 @@
+         Double limiteCpu = capturaLimiteCpu.get(0).getLimite();
+         Double limiteRam = capturaLimiteRam.get(0).getLimite();
+         Double limiteDisco = capturaLimiteDisco.get(0).getLimite();
++        Double limiteTaxaLeitura = capturaLimiteTaxaLeitura.get(0).getLimite();
++        Double limiteTaxaEscrita = capturaLimiteTaxaEscrita.get(0).getLimite();
++        Double limiteLatenciaDisco = capturaLimiteLatenciaDisco.get(0).getLimite();
+         Double limiteDown = capturaLimiteDown.get(0).getLimite();
+         Double limiteUp = capturaLimiteUpload.get(0).getLimite();
+         Double limiteIn = capturaLimitePacoteIn.get(0).getLimite();
+@@ -209,6 +236,10 @@
+             Double primeiroRegistroCpu = Double.valueOf(registro[2]);
+             Double primeiroRegistroRam = Double.valueOf(registro[3]);
+             Double primeiroRegistroDisco = Double.valueOf(registro[6]);
++            Double primeiroRegistroTaxaLeitura = Double.valueOf(registro[10]);
++            Double primeiroRegistroTaxaEscrita = Double.valueOf(registro[11]);
++            Double primeiroRegistroLatenciaLeitura = Double.valueOf(registro[12]);
++            Double primeiroRegistroLatenciaEscrita = Double.valueOf(registro[13]);
+             Double primeiroRegistroDown = Double.valueOf(registro[16]);
+             Double primeiroRegistroUp = Double.valueOf(registro[17]);
+             Long primeiroRegistroIn = Long.valueOf(registro[18]);
+@@ -225,6 +256,9 @@
+             Boolean podeRegistrarCpu = false;
+             Boolean podeRegistrarRam = false;
+             Boolean podeRegistrarDisco = false;
++            Boolean podeResgistrarTaxaLeitura = false;
++            Boolean podeResgistrarTaxaEscrita = false;
++            Boolean podeResgistrarLatenciaDisco = false;
+             Boolean podeRegistrarDown = false;
+             Boolean podeRegistrarUp = false;
+             Boolean podeRegistrarIn = false;
+@@ -236,6 +270,9 @@
+             Integer contCpu = 0;
+             Integer contRam = 0;
+             Integer contDisco = 0;
++            Integer contTaxaLeitura = 0;
++            Integer contTaxaEscrita = 0;
++            Integer contLatenciaDisco = 0;
+             Integer contDown = 0;
+             Integer contUp = 0;
+             Integer contIn = 0;
+@@ -254,11 +291,24 @@
+                 contRam++;
+             }
+ 
+-            // disco...
++            // DISCO
+             if (primeiroRegistroDisco > limiteDisco) {
+                 contDisco++;
+             }
+ 
++            if (primeiroRegistroTaxaLeitura > limiteTaxaLeitura) {
++                contTaxaLeitura++;
++            }
++
++            if (primeiroRegistroLatenciaEscrita > limiteTaxaEscrita) {
++                contTaxaEscrita++;
++            }
++
++            if(primeiroRegistroLatenciaEscrita > limiteLatenciaDisco || primeiroRegistroLatenciaLeitura > limiteLatenciaDisco) {
++                contLatenciaDisco++;
++            }
++
++            //Rede:
+             if (primeiroRegistroDown > limiteDown) {
+                 contDown++;
+             }
+@@ -296,6 +346,10 @@
+                 Double usoCPU = Double.valueOf(registro[2]);
+                 Double usoRAM = Double.valueOf(registro[3]);
+                 Double usoDisco = Double.valueOf(registro[6]);
++                Double taxaLeitura = Double.valueOf(registro[9]);
++                Double taxaEscrita = Double.valueOf(registro[10]);
++                Double latenciaDiscoLeitura = Double.valueOf(registro[11]);
++                Double latenciaDiscoEscrita = Double.valueOf(registro[12]);
+                 Double netDown = Double.valueOf(registro[16]);
+                 Double netUp = Double.valueOf(registro[17]);
+                 Long pacotesIn = Long.valueOf(registro[18]);
+@@ -329,6 +383,24 @@
+                     contDisco++;
+                 }
+ 
++                if (taxaLeitura < limiteTaxaLeitura) {
++                    contTaxaEscrita = 0;
++                } else {
++                    contTaxaLeitura++;
++                }
++
++                if (taxaEscrita < limiteTaxaEscrita) {
++                    contTaxaEscrita = 0;
++                } else {
++                    contTaxaEscrita++;
++                }
++
++                if (latenciaDiscoEscrita < limiteLatenciaDisco && latenciaDiscoLeitura < limiteLatenciaDisco) {
++                    contLatenciaDisco = 0;
++                } else {
++                    contLatenciaDisco++;
++                }
++
+                 if (netDown < limiteDown) {
+                     contDown = 0;
+                 } else {
+@@ -385,6 +457,18 @@
+                     podeRegistrarDisco = true;
+                 }
+ 
++                if (contTaxaLeitura == 3) {
++                    podeResgistrarTaxaLeitura = true;
++                }
++
++                if (contTaxaEscrita == 3) {
++                    podeResgistrarTaxaEscrita = true;
++                }
++
++                if (contLatenciaDisco == 3) {
++                    podeResgistrarTaxaEscrita = true;
++                }
++
+                 if (contDown == 3) {
+                     podeRegistrarDown = true;
+                 }
+@@ -449,6 +533,7 @@
+ 
+                 }
+ 
++                //ALERTAS DISCO
+                 for (ServidorComponente sc : capturaLimiteDisco) {
+                     String tipoComponente = sc.getNome();
+                     Double limite = sc.getLimite();
+@@ -464,9 +549,67 @@
+                         String msgJira = "Alerta DISCO: " + usoDisco + "%" + "  -  " + dataHoraColeta;
+                         abrirChamadoJira(msgJira);
+                     }
++                }
++
++                for (ServidorComponente sc : capturaLimiteTaxaLeitura) {
++                    String tipoComponente = sc.getNome();
++                    Double limite = sc.getLimite();
++
++                    if (tipoComponente.equalsIgnoreCase("taxaLeitura") && taxaLeitura > limite && podeResgistrarTaxaLeitura && contTaxaLeitura >= 3) {
++                        String sqlInsertAlertaTaxaLeitura = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
++                        template.update(sqlInsertAlertaTaxaLeitura, dataHoraColeta, codigoTaxaLeitura, fkComponenteRede);
++                        podeResgistrarTaxaLeitura = false;
++
++                        // Detalhe no Jira
++                        String msgJira = "Alerta de desempenho no disco detectado. "
++                                + "Taxa de leitura registrada: " + taxaLeitura + " MB/s. "
++                                + "Servidor: " + nomeDaMaquina +   ". "
++                                + "Data/Hora da coleta: " + dataHoraColeta + ". "
++                                + "Atenção: valores acima do limite configurado podem indicar risco de degradação de performance.";
++                        abrirChamadoJira(msgJira);
++                    }
+ 
+                 }
+ 
++                for (ServidorComponente sc : capturaLimiteTaxaEscrita) {
++                    String tipoComponente = sc.getNome();
++                    Double limite = sc.getLimite();
++
++                    if (tipoComponente.equalsIgnoreCase("taxaEscrita") && taxaEscrita > limite && podeResgistrarTaxaEscrita && contTaxaEscrita >= 3) {
++                        String sqlInsertAlertaTaxaEscrita = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
++                        template.update(sqlInsertAlertaTaxaEscrita, dataHoraColeta, codigotaxaEscrita, fkComponenteRede);
++                        podeResgistrarTaxaEscrita = false;
++
++                        // Detalhe no Jira
++                        String msgJira = "Alerta de desempenho no disco detectado. "
++                                + "Taxa de escrita registrada: " + taxaEscrita + " MB/s. "
++                                + "Servidor: " + nomeDaMaquina +   ". "
++                                + "Data/Hora da coleta: " + dataHoraColeta + ". "
++                                + "Atenção: valores acima do limite configurado podem indicar risco de degradação de performance.";
++                        abrirChamadoJira(msgJira);
++                    }
++                }
++
++                for (ServidorComponente sc : capturaLimiteLatenciaDisco) {
++                    String tipoComponente = sc.getNome();
++                    Double limite = sc.getLimite();
++
++                    if (tipoComponente.equalsIgnoreCase("latenciaDisco") && latenciaDiscoLeitura > limite && latenciaDiscoEscrita > limite && podeResgistrarLatenciaDisco && contLatenciaDisco >= 3) {
++                        String sqlInsertAlertaLatenciaDisco = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
++                        template.update(sqlInsertAlertaLatenciaDisco, dataHoraColeta, codigoLatenciaDisco, fkComponenteRede);
++                        podeResgistrarLatenciaDisco = false;
++
++                        // Detalhe no Jira
++                        String msgJira = "Alerta de desempenho no disco detectado. "
++                                + "Latência de Disco registrada: " + "Escrita: " + latenciaDiscoEscrita + " MB/s - Leitura " + latenciaDiscoLeitura + "MB/s"
++                                + "Servidor: " + nomeDaMaquina +   ". "
++                                + "Data/Hora da coleta: " + dataHoraColeta + ". "
++                                + "Atenção: valores acima do limite configurado podem indicar risco de degradação de performance.";
++                        abrirChamadoJira(msgJira);
++                    }
++                }
++
++                //ALERTAS REDE
+                 for (ServidorComponente sc : capturaLimiteDown) {
+                     String tipoComponente = sc.getNome();
+                     Double limite = sc.getLimite();
+@@ -629,7 +772,7 @@
+     public void abrirChamadoJira(String msgJira) {
+         String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";
+         String email = "vitalview.sptech@gmail.com";
+-        String apiToken = "JIRA_TOKEN_AQUI";
++        String apiToken = "TOKEN JIRA AQUI";
+ 
+         String credentials = email + ":" + apiToken;
+         String basicAuth = "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+@@ -676,6 +819,4 @@
+             System.out.println(e);
+         }
+     }
+-
+-
+ }
+\ No newline at end of file
+Index: saida.json
+===================================================================
+diff --git a/saida.json b/saida.json
+deleted file mode 100644
+--- a/saida.json	(revision b876a62a064bde8e0147bd4cd0d62f1f5b0dd3f6)
++++ /dev/null	(revision b876a62a064bde8e0147bd4cd0d62f1f5b0dd3f6)
+@@ -1,2320 +0,0 @@
+-[
+-  {
+-    "Uptime_(s)": 48084,
+-    "alertaRam": "não",
+-    "alertaDisco": "sim",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 15.121199998247903,
+-    "Uso_de_Cpu": 10.5,
+-    "Disco_livre_(bytes)": 9.3099077632E10,
+-    "Net_Down_(Mbps)": 0,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.461203968E9,
+-    "Pacotes_IN_(intervalo)": 0,
+-    "scoreSaudeServidor": 60,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 10.2,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 90.1,
+-    "Disco_usado_(bytes)": 1.46348490752E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 210.42263593525664,
+-    "Data_da_Coleta": "2025-11-15 22:51:31",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 1869.1797979355244,
+-    "Net_bytes_recebidos": 4.324745988E9,
+-    "Net_Up_(Mbps)": 0,
+-    "Pacotes_OUT_(intervalo)": 0,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20720104E8
+-  },
+-  {
+-    "Uptime_(s)": 48085,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.849699999496806,
+-    "Uso_de_Cpu": 21.5,
+-    "Disco_livre_(bytes)": 9.3098881024E10,
+-    "Net_Down_(Mbps)": 0.04892881856960057,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.459422208E9,
+-    "Pacotes_IN_(intervalo)": 19,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 88.2,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 2.361275088547816E-4,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634868736E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 70.9825169003623,
+-    "Data_da_Coleta": "2025-11-15 22:51:32",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 4.136015526957693,
+-    "Net_bytes_recebidos": 4.324752752E9,
+-    "Net_Up_(Mbps)": 0.053905611469642734,
+-    "Pacotes_OUT_(intervalo)": 21,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20727556E8
+-  },
+-  {
+-    "Uptime_(s)": 48086,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.254199997987598,
+-    "Uso_de_Cpu": 29.3,
+-    "Disco_livre_(bytes)": 9.3099008E10,
+-    "Net_Down_(Mbps)": 0.018022107866404364,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.37009664E9,
+-    "Pacotes_IN_(intervalo)": 12,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.1,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348560384E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 38.178144325828455,
+-    "Data_da_Coleta": "2025-11-15 22:51:33",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0.0012091898428053204,
+-    "Disco_taxa_escrita_mbs": 96.66588616386495,
+-    "Net_bytes_recebidos": 4.324755123E9,
+-    "Net_Up_(Mbps)": 0.007167797434845767,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20728499E8
+-  },
+-  {
+-    "Uptime_(s)": 48087,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 8.246099998359568,
+-    "Uso_de_Cpu": 90.2,
+-    "Disco_livre_(bytes)": 9.3099008E10,
+-    "Net_Down_(Mbps)": 0.005255425947222993,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.369539584E9,
+-    "Pacotes_IN_(intervalo)": 9,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.1,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348560384E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.011822954795913,
+-    "Data_da_Coleta": "2025-11-15 22:51:34",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.008339200176889393,
+-    "Net_bytes_recebidos": 4.324755815E9,
+-    "Net_Up_(Mbps)": 0.005452884147552181,
+-    "Pacotes_OUT_(intervalo)": 11,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20729217E8
+-  },
+-  {
+-    "Uptime_(s)": 48088,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.608499999856576,
+-    "Uso_de_Cpu": 12.6,
+-    "Disco_livre_(bytes)": 9.309898752E10,
+-    "Net_Down_(Mbps)": 0.006873378823628237,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.370637312E9,
+-    "Pacotes_IN_(intervalo)": 11,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.1,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348580864E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.4683320836133196,
+-    "Data_da_Coleta": "2025-11-15 22:51:36",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.26350018827219224,
+-    "Net_bytes_recebidos": 4.324756739E9,
+-    "Net_Up_(Mbps)": 0.007156050247110783,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20730179E8
+-  },
+-  {
+-    "Uptime_(s)": 48089,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.264699997904245,
+-    "Uso_de_Cpu": 6.1,
+-    "Disco_livre_(bytes)": 9.309898752E10,
+-    "Net_Down_(Mbps)": 0.007587860563553731,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.369981952E9,
+-    "Pacotes_IN_(intervalo)": 11,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.1,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348580864E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.7535684965132973,
+-    "Data_da_Coleta": "2025-11-15 22:51:37",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0,
+-    "Net_bytes_recebidos": 4.324757737E9,
+-    "Net_Up_(Mbps)": 0.008150487499127855,
+-    "Pacotes_OUT_(intervalo)": 15,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20731193E8
+-  },
+-  {
+-    "Uptime_(s)": 48090,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.396799999696668,
+-    "Uso_de_Cpu": 7.3,
+-    "Disco_livre_(bytes)": 9.309898752E10,
+-    "Net_Down_(Mbps)": 0.010135972367357946,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.368040448E9,
+-    "Pacotes_IN_(intervalo)": 14,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.1,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348580864E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.8240554655267092,
+-    "Data_da_Coleta": "2025-11-15 22:51:38",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.05375773221572618,
+-    "Net_bytes_recebidos": 4.324759077E9,
+-    "Net_Up_(Mbps)": 0.012738042885545359,
+-    "Pacotes_OUT_(intervalo)": 17,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20732935E8
+-  },
+-  {
+-    "Uptime_(s)": 48091,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.390900005702861,
+-    "Uso_de_Cpu": 12.2,
+-    "Disco_livre_(bytes)": 9.309898752E10,
+-    "Net_Down_(Mbps)": 0.006244856714287368,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.336050688E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0.002336448598130841,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348580864E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 15.70184449326969,
+-    "Data_da_Coleta": "2025-11-15 22:51:39",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.11540021484132681,
+-    "Net_bytes_recebidos": 4.324759896E9,
+-    "Net_Up_(Mbps)": 0.007190353945754565,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20733878E8
+-  },
+-  {
+-    "Uptime_(s)": 48092,
+-    "alertaRam": "não",
+-    "alertaDisco": "sim",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.079999995767139,
+-    "Uso_de_Cpu": 90,
+-    "Disco_livre_(bytes)": 9.309898752E10,
+-    "Net_Down_(Mbps)": 0.005613248862387422,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.33689856E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 60,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 90.1,
+-    "Disco_usado_(bytes)": 1.46348580864E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.6417651919424936,
+-    "Data_da_Coleta": "2025-11-15 22:51:40",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.0060281412537950985,
+-    "Net_bytes_recebidos": 4.324760635E9,
+-    "Net_Up_(Mbps)": 0.0065095457037429244,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20734735E8
+-  },
+-  {
+-    "Uptime_(s)": 48093,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 12.256799993338063,
+-    "Uso_de_Cpu": 14.3,
+-    "Disco_livre_(bytes)": 9.309892608E10,
+-    "Net_Down_(Mbps)": 0.014072734797117263,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.335051264E9,
+-    "Pacotes_IN_(intervalo)": 18,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348642304E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 3.772492906711091,
+-    "Data_da_Coleta": "2025-11-15 22:51:41",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.42817632303169734,
+-    "Net_bytes_recebidos": 4.32476249E9,
+-    "Net_Up_(Mbps)": 0.013245819383162664,
+-    "Pacotes_OUT_(intervalo)": 22,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20736481E8
+-  },
+-  {
+-    "Uptime_(s)": 48094,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 25.954899996577296,
+-    "Uso_de_Cpu": 15.9,
+-    "Disco_livre_(bytes)": 9.309892608E10,
+-    "Net_Down_(Mbps)": 0.06575814745700372,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.327268864E9,
+-    "Pacotes_IN_(intervalo)": 31,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.6,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348642304E11,
+-    "alertaLatencia": "sim",
+-    "Disco_taxa_leitura_mbs": 0.9002159729940725,
+-    "Data_da_Coleta": "2025-11-15 22:51:42",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.12634610147285227,
+-    "Net_bytes_recebidos": 4.324771382E9,
+-    "Net_Up_(Mbps)": 0.005857000988073206,
+-    "Pacotes_OUT_(intervalo)": 12,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20737273E8
+-  },
+-  {
+-    "Uptime_(s)": 48095,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.950100000016391,
+-    "Uso_de_Cpu": 23.6,
+-    "Disco_livre_(bytes)": 9.309892608E10,
+-    "Net_Down_(Mbps)": 0.0110489226089345,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.341416448E9,
+-    "Pacotes_IN_(intervalo)": 12,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.8,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348642304E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 3.4932867412524162,
+-    "Data_da_Coleta": "2025-11-15 22:51:43",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.4243797564568365,
+-    "Net_bytes_recebidos": 4.324772864E9,
+-    "Net_Up_(Mbps)": 0.007179563071797519,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20738236E8
+-  },
+-  {
+-    "Uptime_(s)": 48096,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.400800004485063,
+-    "Uso_de_Cpu": 11,
+-    "Disco_livre_(bytes)": 9.309892608E10,
+-    "Net_Down_(Mbps)": 0.02233987849412228,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.334023168E9,
+-    "Pacotes_IN_(intervalo)": 13,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348642304E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.600156421819291,
+-    "Data_da_Coleta": "2025-11-15 22:51:44",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.009260164478120897,
+-    "Net_bytes_recebidos": 4.324775809E9,
+-    "Net_Up_(Mbps)": 0.007494668914157151,
+-    "Pacotes_OUT_(intervalo)": 14,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20739224E8
+-  },
+-  {
+-    "Uptime_(s)": 48097,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.051399999705609,
+-    "Uso_de_Cpu": 7.9,
+-    "Disco_livre_(bytes)": 9.309892608E10,
+-    "Net_Down_(Mbps)": 0.005656288421367223,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.338819584E9,
+-    "Pacotes_IN_(intervalo)": 9,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348642304E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.2932388824001438,
+-    "Data_da_Coleta": "2025-11-15 22:51:45",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.03340696128609233,
+-    "Net_bytes_recebidos": 4.324776554E9,
+-    "Net_Up_(Mbps)": 0.006233305763681195,
+-    "Pacotes_OUT_(intervalo)": 12,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20740045E8
+-  },
+-  {
+-    "Uptime_(s)": 48098,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.886600000143517,
+-    "Uso_de_Cpu": 11.2,
+-    "Disco_livre_(bytes)": 9.309892608E10,
+-    "Net_Down_(Mbps)": 0.007160798505025083,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.341228032E9,
+-    "Pacotes_IN_(intervalo)": 11,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.8,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348642304E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.8676424160440707,
+-    "Data_da_Coleta": "2025-11-15 22:51:46",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.011123620718513727,
+-    "Net_bytes_recebidos": 4.324777496E9,
+-    "Net_Up_(Mbps)": 0.008209832680920476,
+-    "Pacotes_OUT_(intervalo)": 14,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20741125E8
+-  },
+-  {
+-    "Uptime_(s)": 48099,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.718400003795978,
+-    "Uso_de_Cpu": 6.5,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.0049632871380487255,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.341387776E9,
+-    "Pacotes_IN_(intervalo)": 9,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.8,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.2665752965022284,
+-    "Data_da_Coleta": "2025-11-15 22:51:47",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.01157010835513144,
+-    "Net_bytes_recebidos": 4.32477815E9,
+-    "Net_Up_(Mbps)": 0.005448991078163585,
+-    "Pacotes_OUT_(intervalo)": 11,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20741843E8
+-  },
+-  {
+-    "Uptime_(s)": 48100,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.387400004314259,
+-    "Uso_de_Cpu": 13,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.008843198607649733,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.337664512E9,
+-    "Pacotes_IN_(intervalo)": 12,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.9437866630754255,
+-    "Data_da_Coleta": "2025-11-15 22:51:48",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 1.0113069446964462,
+-    "Net_bytes_recebidos": 4.324779315E9,
+-    "Net_Up_(Mbps)": 0.007476867492304709,
+-    "Pacotes_OUT_(intervalo)": 14,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20742828E8
+-  },
+-  {
+-    "Uptime_(s)": 48101,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.246399996802211,
+-    "Uso_de_Cpu": 5.8,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.006171273746752975,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.33755392E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.541389162942129,
+-    "Data_da_Coleta": "2025-11-15 22:51:49",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.007416289903316837,
+-    "Net_bytes_recebidos": 4.324780127E9,
+-    "Net_Up_(Mbps)": 0.006976883373792156,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20743746E8
+-  },
+-  {
+-    "Uptime_(s)": 48103,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.399400004942436,
+-    "Uso_de_Cpu": 9.1,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.006203033915350058,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.33802496E9,
+-    "Pacotes_IN_(intervalo)": 11,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.5311957402256611,
+-    "Data_da_Coleta": "2025-11-15 22:51:50",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.00841683391202632,
+-    "Net_bytes_recebidos": 4.324780937E9,
+-    "Net_Up_(Mbps)": 0.007780595627155134,
+-    "Pacotes_OUT_(intervalo)": 15,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20744762E8
+-  },
+-  {
+-    "Uptime_(s)": 48104,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.253700001456309,
+-    "Uso_de_Cpu": 25.5,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.007495182041228937,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.34830592E9,
+-    "Pacotes_IN_(intervalo)": 12,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.9,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.0597189417926494,
+-    "Data_da_Coleta": "2025-11-15 22:51:51",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.23713990305849497,
+-    "Net_bytes_recebidos": 4.324781925E9,
+-    "Net_Up_(Mbps)": 0.008511735071112215,
+-    "Pacotes_OUT_(intervalo)": 15,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20745884E8
+-  },
+-  {
+-    "Uptime_(s)": 48105,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.976299999223556,
+-    "Uso_de_Cpu": 7.2,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.006821197555031442,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.341686784E9,
+-    "Pacotes_IN_(intervalo)": 9,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.8,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.25600985889309547,
+-    "Data_da_Coleta": "2025-11-15 22:51:52",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.10527941661002295,
+-    "Net_bytes_recebidos": 4.324782823E9,
+-    "Net_Up_(Mbps)": 0.005453919648677701,
+-    "Pacotes_OUT_(intervalo)": 11,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20746602E8
+-  },
+-  {
+-    "Uptime_(s)": 48106,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 8.11239999893587,
+-    "Uso_de_Cpu": 24.7,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.006222261222189798,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.347961856E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.9,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.475772064616297,
+-    "Data_da_Coleta": "2025-11-15 22:51:54",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.008806428777546999,
+-    "Net_bytes_recebidos": 4.324783642E9,
+-    "Net_Up_(Mbps)": 0.007164337402350402,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20747545E8
+-  },
+-  {
+-    "Uptime_(s)": 48107,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.120100002794061,
+-    "Uso_de_Cpu": 7.3,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.022861713036711636,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.353389056E9,
+-    "Pacotes_IN_(intervalo)": 15,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.9,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.4259497538699269,
+-    "Data_da_Coleta": "2025-11-15 22:51:55",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.01250069929835655,
+-    "Net_bytes_recebidos": 4.324786662E9,
+-    "Net_Up_(Mbps)": 0.009068984178139252,
+-    "Pacotes_OUT_(intervalo)": 16,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20748743E8
+-  },
+-  {
+-    "Uptime_(s)": 48108,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.087600002705585,
+-    "Uso_de_Cpu": 10.1,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.016449204940852648,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.347412992E9,
+-    "Pacotes_IN_(intervalo)": 23,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.9,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.15958076982759017,
+-    "Data_da_Coleta": "2025-11-15 22:51:56",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0,
+-    "Net_bytes_recebidos": 4.324788822E9,
+-    "Net_Up_(Mbps)": 0.0134487481136786,
+-    "Pacotes_OUT_(intervalo)": 23,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20750509E8
+-  },
+-  {
+-    "Uptime_(s)": 48109,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.5957999943057075,
+-    "Uso_de_Cpu": 14.9,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.008369518017895938,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.341686784E9,
+-    "Pacotes_IN_(intervalo)": 9,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.8,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.17425773501501543,
+-    "Data_da_Coleta": "2025-11-15 22:51:57",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.009732479881157776,
+-    "Net_bytes_recebidos": 4.324789924E9,
+-    "Net_Up_(Mbps)": 0.005453097946324214,
+-    "Pacotes_OUT_(intervalo)": 11,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20751227E8
+-  },
+-  {
+-    "Uptime_(s)": 48110,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.249900001625065,
+-    "Uso_de_Cpu": 9.1,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.010887364839184342,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.342628864E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.8,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.2076297059209788,
+-    "Data_da_Coleta": "2025-11-15 22:51:58",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.01761144827008302,
+-    "Net_bytes_recebidos": 4.324791358E9,
+-    "Net_Up_(Mbps)": 0.005967551439050832,
+-    "Pacotes_OUT_(intervalo)": 11,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20752013E8
+-  },
+-  {
+-    "Uptime_(s)": 48111,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.8177000032155775,
+-    "Uso_de_Cpu": 13.2,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.008986472339587529,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.351504896E9,
+-    "Pacotes_IN_(intervalo)": 13,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.9,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.21878096751901588,
+-    "Data_da_Coleta": "2025-11-15 22:51:59",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.010197417977581249,
+-    "Net_bytes_recebidos": 4.324792541E9,
+-    "Net_Up_(Mbps)": 0.008416746705209619,
+-    "Pacotes_OUT_(intervalo)": 15,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20753121E8
+-  },
+-  {
+-    "Uptime_(s)": 48112,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 19.625900000391994,
+-    "Uso_de_Cpu": 10.4,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.06589919871086485,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.357616128E9,
+-    "Pacotes_IN_(intervalo)": 30,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "sim",
+-    "Disco_taxa_leitura_mbs": 0.15297170444352337,
+-    "Data_da_Coleta": "2025-11-15 22:52:00",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0,
+-    "Net_bytes_recebidos": 4.324801167E9,
+-    "Net_Up_(Mbps)": 0.00657005690834034,
+-    "Pacotes_OUT_(intervalo)": 12,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20753981E8
+-  },
+-  {
+-    "Uptime_(s)": 48113,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 40.3437000059057,
+-    "Uso_de_Cpu": 7.3,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.007977913775577895,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.351795712E9,
+-    "Pacotes_IN_(intervalo)": 14,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 86.9,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "sim",
+-    "Disco_taxa_leitura_mbs": 0.14654475143797313,
+-    "Data_da_Coleta": "2025-11-15 22:52:01",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.03984185429719895,
+-    "Net_bytes_recebidos": 4.324802231E9,
+-    "Net_Up_(Mbps)": 0.010272313789982817,
+-    "Pacotes_OUT_(intervalo)": 19,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20755351E8
+-  },
+-  {
+-    "Uptime_(s)": 48114,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.785400000808295,
+-    "Uso_de_Cpu": 15,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.012898813768475978,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.364120576E9,
+-    "Pacotes_IN_(intervalo)": 17,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.4215900310829778,
+-    "Data_da_Coleta": "2025-11-15 22:52:02",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.07657083897874598,
+-    "Net_bytes_recebidos": 4.324803979E9,
+-    "Net_Up_(Mbps)": 0.011334426743923971,
+-    "Pacotes_OUT_(intervalo)": 20,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20756887E8
+-  },
+-  {
+-    "Uptime_(s)": 48115,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.37499999377178,
+-    "Uso_de_Cpu": 27.1,
+-    "Disco_livre_(bytes)": 9.3098921984E10,
+-    "Net_Down_(Mbps)": 0.008040592045672312,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.382618112E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.3,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.463486464E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 6.833137355672931,
+-    "Data_da_Coleta": "2025-11-15 22:52:03",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.21397162584135793,
+-    "Net_bytes_recebidos": 4.324805035E9,
+-    "Net_Up_(Mbps)": 0.006548209431134648,
+-    "Pacotes_OUT_(intervalo)": 12,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20757747E8
+-  },
+-  {
+-    "Uptime_(s)": 48116,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.347099999606144,
+-    "Uso_de_Cpu": 33.4,
+-    "Disco_livre_(bytes)": 9.3098917888E10,
+-    "Net_Down_(Mbps)": 0.009796208371871907,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.389278208E9,
+-    "Pacotes_IN_(intervalo)": 12,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.3,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348650496E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.3746565290580193,
+-    "Data_da_Coleta": "2025-11-15 22:52:04",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.19783908154686358,
+-    "Net_bytes_recebidos": 4.32480632E9,
+-    "Net_Up_(Mbps)": 0.007600637935218904,
+-    "Pacotes_OUT_(intervalo)": 14,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20758744E8
+-  },
+-  {
+-    "Uptime_(s)": 48117,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.430699999327771,
+-    "Uso_de_Cpu": 9.3,
+-    "Disco_livre_(bytes)": 9.3098917888E10,
+-    "Net_Down_(Mbps)": 0.020794538909113917,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.386046464E9,
+-    "Pacotes_IN_(intervalo)": 16,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.3,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348650496E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.22272092704434882,
+-    "Data_da_Coleta": "2025-11-15 22:52:05",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.029696123605913175,
+-    "Net_bytes_recebidos": 4.324809059E9,
+-    "Net_Up_(Mbps)": 0.09539371354253975,
+-    "Pacotes_OUT_(intervalo)": 17,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20771309E8
+-  },
+-  {
+-    "Uptime_(s)": 48118,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.183499994222075,
+-    "Uso_de_Cpu": 24.3,
+-    "Disco_livre_(bytes)": 9.3098917888E10,
+-    "Net_Down_(Mbps)": 0.00766361455218779,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.387738112E9,
+-    "Pacotes_IN_(intervalo)": 13,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 87.3,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348650496E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.5885336223796884,
+-    "Data_da_Coleta": "2025-11-15 22:52:06",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 22,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.019555705806920027,
+-    "Net_bytes_recebidos": 4.324810065E9,
+-    "Net_Up_(Mbps)": 0.00828066502805977,
+-    "Pacotes_OUT_(intervalo)": 15,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20772396E8
+-  },
+-  {
+-    "Uptime_(s)": 48119,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.8577000056393445,
+-    "Uso_de_Cpu": 32,
+-    "Disco_livre_(bytes)": 9.3098909696E10,
+-    "Net_Down_(Mbps)": 0.3282307485137047,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.504678912E9,
+-    "Pacotes_IN_(intervalo)": 76,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 88.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348658688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 19.60829209446302,
+-    "Data_da_Coleta": "2025-11-15 22:52:07",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "sim",
+-    "Conexões_TCP_ESTABLISHED": 24,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.10121966509419475,
+-    "Net_bytes_recebidos": 4.324853098E9,
+-    "Net_Up_(Mbps)": 0.3008025475596629,
+-    "Pacotes_OUT_(intervalo)": 71,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20811833E8
+-  },
+-  {
+-    "Uptime_(s)": 48120,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.329299998469651,
+-    "Uso_de_Cpu": 29.9,
+-    "Disco_livre_(bytes)": 9.3098909696E10,
+-    "Net_Down_(Mbps)": 0.034295581386527704,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.566995456E9,
+-    "Pacotes_IN_(intervalo)": 57,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.4,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348658688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.639657985881114,
+-    "Data_da_Coleta": "2025-11-15 22:52:08",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "sim",
+-    "Conexões_TCP_ESTABLISHED": 24,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.1357413749108178,
+-    "Net_bytes_recebidos": 4.324857613E9,
+-    "Net_Up_(Mbps)": 1.1241126896591025,
+-    "Pacotes_OUT_(intervalo)": 25,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20959822E8
+-  },
+-  {
+-    "Uptime_(s)": 48122,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.972599996719509,
+-    "Uso_de_Cpu": 26.6,
+-    "Disco_livre_(bytes)": 9.3098909696E10,
+-    "Net_Down_(Mbps)": 0.006204830430150787,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.568461824E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.5,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348658688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.6658594219142255,
+-    "Data_da_Coleta": "2025-11-15 22:52:09",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 24,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.11810025256439816,
+-    "Net_bytes_recebidos": 4.324858432E9,
+-    "Net_Up_(Mbps)": 0.007144267516034423,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20960765E8
+-  },
+-  {
+-    "Uptime_(s)": 48123,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 15.891800001554657,
+-    "Uso_de_Cpu": 31.3,
+-    "Disco_livre_(bytes)": 9.3098909696E10,
+-    "Net_Down_(Mbps)": 0.018361907573520565,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.724109824E9,
+-    "Pacotes_IN_(intervalo)": 25,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 91.3,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348658688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.175675648820497,
+-    "Data_da_Coleta": "2025-11-15 22:52:10",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.49125126363843874,
+-    "Net_bytes_recebidos": 4.324860864E9,
+-    "Net_Up_(Mbps)": 0.0509709037947522,
+-    "Pacotes_OUT_(intervalo)": 30,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20967516E8
+-  },
+-  {
+-    "Uptime_(s)": 48124,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.094100001268089,
+-    "Uso_de_Cpu": 25.7,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.009302067137426834,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.552172032E9,
+-    "Pacotes_IN_(intervalo)": 14,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.3,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.2926795448110753,
+-    "Data_da_Coleta": "2025-11-15 22:52:11",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 2.1711554326580385,
+-    "Net_bytes_recebidos": 4.324862107E9,
+-    "Net_Up_(Mbps)": 0.010843680838400229,
+-    "Pacotes_OUT_(intervalo)": 18,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20968965E8
+-  },
+-  {
+-    "Uptime_(s)": 48125,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.592500001715962,
+-    "Uso_de_Cpu": 9.6,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.010021670816867428,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.548964864E9,
+-    "Pacotes_IN_(intervalo)": 14,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.2,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.9967195727412363,
+-    "Data_da_Coleta": "2025-11-15 22:52:13",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 1.9078997791651278,
+-    "Net_bytes_recebidos": 4.324863424E9,
+-    "Net_Up_(Mbps)": 0.042628245949955464,
+-    "Pacotes_OUT_(intervalo)": 15,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20974567E8
+-  },
+-  {
+-    "Uptime_(s)": 48126,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 26.802599997608922,
+-    "Uso_de_Cpu": 11.5,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.007312515003030643,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.538548736E9,
+-    "Pacotes_IN_(intervalo)": 11,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.1,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "sim",
+-    "Disco_taxa_leitura_mbs": 0.4950056977007248,
+-    "Data_da_Coleta": "2025-11-15 22:52:14",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 7.269698338601058,
+-    "Net_bytes_recebidos": 4.324864236E9,
+-    "Net_Up_(Mbps)": 0.007752936467387628,
+-    "Pacotes_OUT_(intervalo)": 14,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.2097553E8
+-  },
+-  {
+-    "Uptime_(s)": 48127,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.0181999981286936,
+-    "Uso_de_Cpu": 9.1,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.009749124399785983,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.551647744E9,
+-    "Pacotes_IN_(intervalo)": 14,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.3,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.442750542082305,
+-    "Data_da_Coleta": "2025-11-15 22:52:15",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0,
+-    "Net_bytes_recebidos": 4.324865692E9,
+-    "Net_Up_(Mbps)": 0.04319497109545024,
+-    "Pacotes_OUT_(intervalo)": 17,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.2098137E8
+-  },
+-  {
+-    "Uptime_(s)": 48128,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.144399998651352,
+-    "Uso_de_Cpu": 21.5,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.0062403159330463405,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.550971904E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.3,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.37422966490813325,
+-    "Data_da_Coleta": "2025-11-15 22:52:16",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.06715755125207837,
+-    "Net_bytes_recebidos": 4.324866514E9,
+-    "Net_Up_(Mbps)": 0.007318326714667484,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20982334E8
+-  },
+-  {
+-    "Uptime_(s)": 48129,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 25.453899994317908,
+-    "Uso_de_Cpu": 18.6,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.019106104540825064,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.561261056E9,
+-    "Pacotes_IN_(intervalo)": 13,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.4,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "sim",
+-    "Disco_taxa_leitura_mbs": 34.42580622688008,
+-    "Data_da_Coleta": "2025-11-15 22:52:17",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.008804435507810118,
+-    "Net_bytes_recebidos": 4.324869031E9,
+-    "Net_Up_(Mbps)": 0.04268320454233586,
+-    "Pacotes_OUT_(intervalo)": 15,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20987957E8
+-  },
+-  {
+-    "Uptime_(s)": 48130,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 16.599299997324124,
+-    "Uso_de_Cpu": 16.9,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.06831560441595474,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.564427264E9,
+-    "Pacotes_IN_(intervalo)": 27,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.4,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.679089149777163,
+-    "Data_da_Coleta": "2025-11-15 22:52:18",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.09130996000382124,
+-    "Net_bytes_recebidos": 4.324876138E9,
+-    "Net_Up_(Mbps)": 0.006477620834512484,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20988765E8
+-  },
+-  {
+-    "Uptime_(s)": 48131,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.7698999991989695,
+-    "Uso_de_Cpu": 15.5,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.018995635857976277,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.57356544E9,
+-    "Pacotes_IN_(intervalo)": 16,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.5,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.6591470793030365,
+-    "Data_da_Coleta": "2025-11-15 22:52:19",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0,
+-    "Net_bytes_recebidos": 4.324880646E9,
+-    "Net_Up_(Mbps)": 0.04386908138515996,
+-    "Pacotes_OUT_(intervalo)": 16,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20994648E8
+-  },
+-  {
+-    "Uptime_(s)": 48132,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 30.771400000958238,
+-    "Uso_de_Cpu": 10,
+-    "Disco_livre_(bytes)": 9.30989056E10,
+-    "Net_Down_(Mbps)": 0.006733619258535071,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.577505792E9,
+-    "Pacotes_IN_(intervalo)": 11,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.6,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.46348662784E11,
+-    "alertaLatencia": "sim",
+-    "Disco_taxa_leitura_mbs": 1.8504625984044467,
+-    "Data_da_Coleta": "2025-11-15 22:52:20",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 18,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.013005259225734063,
+-    "Net_bytes_recebidos": 4.324881531E9,
+-    "Net_Up_(Mbps)": 0.00669557621187668,
+-    "Pacotes_OUT_(intervalo)": 14,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.20995528E8
+-  },
+-  {
+-    "Uptime_(s)": 48133,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.635199999436736,
+-    "Uso_de_Cpu": 10.8,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.06285329257804716,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.578279936E9,
+-    "Pacotes_IN_(intervalo)": 23,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.6,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.4600936317645505,
+-    "Data_da_Coleta": "2025-11-15 22:52:21",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.127250305635668,
+-    "Net_bytes_recebidos": 4.324890008E9,
+-    "Net_Up_(Mbps)": 0.07099448819568262,
+-    "Pacotes_OUT_(intervalo)": 28,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21005103E8
+-  },
+-  {
+-    "Uptime_(s)": 48134,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.014099996013101,
+-    "Uso_de_Cpu": 9.3,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.006079830723150011,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.575109632E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.5,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.489430178210767,
+-    "Data_da_Coleta": "2025-11-15 22:52:22",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.007761486035058805,
+-    "Net_bytes_recebidos": 4.32489082E9,
+-    "Net_Up_(Mbps)": 0.006439229583631786,
+-    "Pacotes_OUT_(intervalo)": 12,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21005963E8
+-  },
+-  {
+-    "Uptime_(s)": 48135,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.133300004876219,
+-    "Uso_de_Cpu": 8,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.014407751965469909,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.576489984E9,
+-    "Pacotes_IN_(intervalo)": 22,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.6,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.9170472517124806,
+-    "Data_da_Coleta": "2025-11-15 22:52:23",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "sim",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.0083876273022483,
+-    "Net_bytes_recebidos": 4.324892709E9,
+-    "Net_Up_(Mbps)": 0.11895357313576954,
+-    "Pacotes_OUT_(intervalo)": 52,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21021559E8
+-  },
+-  {
+-    "Uptime_(s)": 48136,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.374500000674743,
+-    "Uso_de_Cpu": 12.8,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.012491846893492045,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.586971648E9,
+-    "Pacotes_IN_(intervalo)": 20,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.7,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.9407608604261712,
+-    "Data_da_Coleta": "2025-11-15 22:52:24",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "sim",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0,
+-    "Net_bytes_recebidos": 4.324894352E9,
+-    "Net_Up_(Mbps)": 0.12841588194222803,
+-    "Pacotes_OUT_(intervalo)": 53,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21038449E8
+-  },
+-  {
+-    "Uptime_(s)": 48137,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 27.198099996894598,
+-    "Uso_de_Cpu": 15.9,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.014288797150151864,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.592824832E9,
+-    "Pacotes_IN_(intervalo)": 23,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.8,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "sim",
+-    "Disco_taxa_leitura_mbs": 4.302316910748993,
+-    "Data_da_Coleta": "2025-11-15 22:52:25",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.011145898732510345,
+-    "Net_bytes_recebidos": 4.324896225E9,
+-    "Net_Up_(Mbps)": 0.050159552195541114,
+-    "Pacotes_OUT_(intervalo)": 27,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21044933E8
+-  },
+-  {
+-    "Uptime_(s)": 48138,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.386400000541471,
+-    "Uso_de_Cpu": 11.7,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.006082396838408837,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.600504832E9,
+-    "Pacotes_IN_(intervalo)": 10,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 89.8,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.5623782867323636,
+-    "Data_da_Coleta": "2025-11-15 22:52:26",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.7390344531004032,
+-    "Net_bytes_recebidos": 4.324897038E9,
+-    "Net_Up_(Mbps)": 0.007017574704092853,
+-    "Pacotes_OUT_(intervalo)": 13,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21045962E8
+-  },
+-  {
+-    "Uptime_(s)": 48140,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 8.268199999292847,
+-    "Uso_de_Cpu": 22.2,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.03134001945735178,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.611408384E9,
+-    "Pacotes_IN_(intervalo)": 18,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 90,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 3.8590624070485213,
+-    "Data_da_Coleta": "2025-11-15 22:52:27",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.24026552174402382,
+-    "Net_bytes_recebidos": 4.324901163E9,
+-    "Net_Up_(Mbps)": 0.04421791836164542,
+-    "Pacotes_OUT_(intervalo)": 18,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21051782E8
+-  },
+-  {
+-    "Uptime_(s)": 48141,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.901300002937205,
+-    "Uso_de_Cpu": 11.3,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.04200314168447482,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.6301312E9,
+-    "Pacotes_IN_(intervalo)": 16,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 90.2,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 19.44434221216171,
+-    "Data_da_Coleta": "2025-11-15 22:52:28",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.15953190519422888,
+-    "Net_bytes_recebidos": 4.324906689E9,
+-    "Net_Up_(Mbps)": 0.007190548685036767,
+-    "Pacotes_OUT_(intervalo)": 14,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21052728E8
+-  },
+-  {
+-    "Uptime_(s)": 48142,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 16.124300003866665,
+-    "Uso_de_Cpu": 18,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.05231252518747359,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.6326912E9,
+-    "Pacotes_IN_(intervalo)": 17,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 90.2,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 1.0131679230463797,
+-    "Data_da_Coleta": "2025-11-15 22:52:29",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.06912180427376859,
+-    "Net_bytes_recebidos": 4.324913577E9,
+-    "Net_Up_(Mbps)": 0.04392793926892381,
+-    "Pacotes_OUT_(intervalo)": 17,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21058512E8
+-  },
+-  {
+-    "Uptime_(s)": 48143,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 17.158799993922003,
+-    "Uso_de_Cpu": 15.5,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.030799752472395667,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.625547776E9,
+-    "Pacotes_IN_(intervalo)": 18,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 90.1,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 2.4028721670733213,
+-    "Data_da_Coleta": "2025-11-15 22:52:31",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 18,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.0931772779208948,
+-    "Net_bytes_recebidos": 4.324917667E9,
+-    "Net_Up_(Mbps)": 0.010550233059615239,
+-    "Pacotes_OUT_(intervalo)": 19,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21059913E8
+-  },
+-  {
+-    "Uptime_(s)": 48144,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 5.804199994599912,
+-    "Uso_de_Cpu": 15.8,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.06287826792872388,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.629631488E9,
+-    "Pacotes_IN_(intervalo)": 21,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 90.2,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.7414696399295232,
+-    "Data_da_Coleta": "2025-11-15 22:52:32",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.10369563033667836,
+-    "Net_bytes_recebidos": 4.324925962E9,
+-    "Net_Up_(Mbps)": 0.07183404464888624,
+-    "Pacotes_OUT_(intervalo)": 26,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21069324E8
+-  },
+-  {
+-    "Uptime_(s)": 48145,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 7.319600001210347,
+-    "Uso_de_Cpu": 12.1,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.030667166221635962,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.629234176E9,
+-    "Pacotes_IN_(intervalo)": 13,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 90.2,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0.038461538461538464,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 0.8669915993400301,
+-    "Data_da_Coleta": "2025-11-15 22:52:33",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.05116366734302753,
+-    "Net_bytes_recebidos": 4.324930058E9,
+-    "Net_Up_(Mbps)": 0.006572624883901093,
+-    "Pacotes_OUT_(intervalo)": 12,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21070336E8
+-  },
+-  {
+-    "Uptime_(s)": 48146,
+-    "alertaRam": "sim",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 6.62690000172006,
+-    "Uso_de_Cpu": 12,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.019158192092641708,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.62857472E9,
+-    "Pacotes_IN_(intervalo)": 14,
+-    "scoreSaudeServidor": 70,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 90.2,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "não",
+-    "Disco_taxa_leitura_mbs": 2.7391938206871735,
+-    "Data_da_Coleta": "2025-11-15 22:52:34",
+-    "saudeServidor": "Alerta",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.1303712850233569,
+-    "Net_bytes_recebidos": 4.324932568E9,
+-    "Net_Up_(Mbps)": 0.04242280145454287,
+-    "Pacotes_OUT_(intervalo)": 15,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21075894E8
+-  },
+-  {
+-    "Uptime_(s)": 48147,
+-    "alertaRam": "não",
+-    "alertaDisco": "não",
+-    "alertaperdaPacote": "não",
+-    "alertaNetDown": "não",
+-    "Latencia_(ms)": 28.56199999951059,
+-    "Uso_de_Cpu": 13.6,
+-    "Disco_livre_(bytes)": 9.3098901504E10,
+-    "Net_Down_(Mbps)": 0.018676411112633268,
+-    "RAM_total_(bytes)": 8.459812864E9,
+-    "RAM_usada_(bytes)": 7.626002432E9,
+-    "Pacotes_IN_(intervalo)": 14,
+-    "scoreSaudeServidor": 100,
+-    "alertaPacotesIn": "não",
+-    "alertaPacotesOut": "não",
+-    "Perda_de_Pacotes_(%)": 0,
+-    "Uso_de_RAM": 10.1,
+-    "alertaConexoes": "não",
+-    "Disco_latencia_leitura": 0,
+-    "Uso_de_Disco": 61.1,
+-    "Disco_usado_(bytes)": 1.4634866688E11,
+-    "alertaLatencia": "sim",
+-    "Disco_taxa_leitura_mbs": 3.0588384031696636,
+-    "Data_da_Coleta": "2025-11-15 22:52:35",
+-    "saudeServidor": "Saudável",
+-    "Nome_da_Maquina": "DESKTOP-J1U1KVK",
+-    "alertaNetUp": "não",
+-    "Conexões_TCP_ESTABLISHED": 19,
+-    "Disco_latencia_escrita": 0,
+-    "Disco_taxa_escrita_mbs": 0.09616943339248486,
+-    "Net_bytes_recebidos": 4.324935023E9,
+-    "Net_Up_(Mbps)": 0.07736066175330661,
+-    "Pacotes_OUT_(intervalo)": 24,
+-    "alertaCpu": "não",
+-    "Disco_total_(bytes)": 2.39447568384E11,
+-    "Net_bytes_enviados": 2.21086063E8
+-  }
+-]
+\ No newline at end of file
+Index: saida.csv
+===================================================================
+diff --git a/saida.csv b/saida.csv
+deleted file mode 100644
+--- a/saida.csv	(revision b876a62a064bde8e0147bd4cd0d62f1f5b0dd3f6)
++++ /dev/null	(revision b876a62a064bde8e0147bd4cd0d62f1f5b0dd3f6)
+@@ -1,62 +0,0 @@
+-Data_da_Coleta;Nome_da_Maquina;Uso_de_Cpu;Uso_de_RAM;RAM_total_(bytes);RAM_usada_(bytes);Uso_de_Disco;Disco_total_(bytes);Disco_usado_(bytes);Disco_livre_(bytes);Disco_taxa_leitura_mbs;Disco_taxa_escrita_mbs;Disco_latencia_leitura;Disco_latencia_escrita;Net_bytes_enviados;Net_bytes_recebidos;Net_Down_(Mbps);Net_Up_(Mbps);Pacotes_IN_(intervalo);Pacotes_OUT_(intervalo);Conexões_TCP_ESTABLISHED;Latencia_(ms);Perda_de_Pacotes_(%);Uptime_(s);alertaCpu;alertaRam;alertaDisco;alertaNetDown;alertaNetUp;alertaPacotesIn;alertaPacotesOut;alertaConexoes;alertaLatencia;alertaperdaPacote;saudeServidor;scoreSaudeServidor
+-2025-11-15 22:51:31;DESKTOP-J1U1KVK;10.5;10.2;8459812864;7461203968;90.1;239447568384;146348490752;93099077632;210.42263593525664;1869.1797979355244;0.0;0.0;220720104;4324745988;0.0;0.0;0;0;22;15.121199998247903;0.0;48084;não;não;sim;não;não;não;não;não;não;não;Alerta;60
+-2025-11-15 22:51:32;DESKTOP-J1U1KVK;21.5;88.2;8459812864;7459422208;61.1;239447568384;146348687360;93098881024;70.9825169003623;4.136015526957693;0.0002361275088547816;0.0;220727556;4324752752;0.04892881856960057;0.053905611469642734;19;21;22;7.849699999496806;0.0;48085;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:33;DESKTOP-J1U1KVK;29.3;87.1;8459812864;7370096640;61.1;239447568384;146348560384;93099008000;38.178144325828455;96.66588616386495;0.0;0.0012091898428053204;220728499;4324755123;0.018022107866404364;0.007167797434845767;12;13;22;7.254199997987598;0.0;48086;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:34;DESKTOP-J1U1KVK;90.2;87.1;8459812864;7369539584;61.1;239447568384;146348560384;93099008000;1.011822954795913;0.008339200176889393;0.0;0.0;220729217;4324755815;0.005255425947222993;0.005452884147552181;9;11;22;8.246099998359568;0.0;48087;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:36;DESKTOP-J1U1KVK;12.6;87.1;8459812864;7370637312;61.1;239447568384;146348580864;93098987520;1.4683320836133196;0.26350018827219224;0.0;0.0;220730179;4324756739;0.006873378823628237;0.007156050247110783;11;13;22;6.608499999856576;0.0;48088;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:37;DESKTOP-J1U1KVK;6.1;87.1;8459812864;7369981952;61.1;239447568384;146348580864;93098987520;0.7535684965132973;0.0;0.0;0;220731193;4324757737;0.007587860563553731;0.008150487499127855;11;15;22;7.264699997904245;0.0;48089;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:38;DESKTOP-J1U1KVK;7.3;87.1;8459812864;7368040448;61.1;239447568384;146348580864;93098987520;1.8240554655267092;0.05375773221572618;0.0;0.0;220732935;4324759077;0.010135972367357946;0.012738042885545359;14;17;22;7.396799999696668;0.0;48090;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:39;DESKTOP-J1U1KVK;12.2;86.7;8459812864;7336050688;61.1;239447568384;146348580864;93098987520;15.70184449326969;0.11540021484132681;0.002336448598130841;0.0;220733878;4324759896;0.006244856714287368;0.007190353945754565;10;13;22;7.390900005702861;0.0;48091;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:40;DESKTOP-J1U1KVK;90.0;86.7;8459812864;7336898560;90.1;239447568384;146348580864;93098987520;0.6417651919424936;0.0060281412537950985;0.0;0.0;220734735;4324760635;0.005613248862387422;0.0065095457037429244;10;13;22;7.079999995767139;0.0;48092;não;não;sim;não;não;não;não;não;não;não;Alerta;60
+-2025-11-15 22:51:41;DESKTOP-J1U1KVK;14.3;86.7;8459812864;7335051264;61.1;239447568384;146348642304;93098926080;3.772492906711091;0.42817632303169734;0.0;0.0;220736481;4324762490;0.014072734797117263;0.013245819383162664;18;22;22;12.256799993338063;0.0;48093;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:42;DESKTOP-J1U1KVK;15.9;86.6;8459812864;7327268864;61.1;239447568384;146348642304;93098926080;0.9002159729940725;0.12634610147285227;0.0;0.0;220737273;4324771382;0.06575814745700372;0.005857000988073206;31;12;22;25.954899996577296;0.0;48094;não;não;não;não;não;não;não;não;sim;não;Saudável;100
+-2025-11-15 22:51:43;DESKTOP-J1U1KVK;23.6;86.8;8459812864;7341416448;61.1;239447568384;146348642304;93098926080;3.4932867412524162;0.4243797564568365;0.0;0.0;220738236;4324772864;0.0110489226089345;0.007179563071797519;12;13;22;7.950100000016391;0.0;48095;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:44;DESKTOP-J1U1KVK;11.0;86.7;8459812864;7334023168;61.1;239447568384;146348642304;93098926080;1.600156421819291;0.009260164478120897;0.0;0.0;220739224;4324775809;0.02233987849412228;0.007494668914157151;13;14;22;6.400800004485063;0.0;48096;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:45;DESKTOP-J1U1KVK;7.9;86.7;8459812864;7338819584;61.1;239447568384;146348642304;93098926080;0.2932388824001438;0.03340696128609233;0.0;0.0;220740045;4324776554;0.005656288421367223;0.006233305763681195;9;12;22;6.051399999705609;0.0;48097;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:46;DESKTOP-J1U1KVK;11.2;86.8;8459812864;7341228032;61.1;239447568384;146348642304;93098926080;0.8676424160440707;0.011123620718513727;0.0;0.0;220741125;4324777496;0.007160798505025083;0.008209832680920476;11;14;22;6.886600000143517;0.0;48098;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:47;DESKTOP-J1U1KVK;6.5;86.8;8459812864;7341387776;61.1;239447568384;146348646400;93098921984;0.2665752965022284;0.01157010835513144;0.0;0.0;220741843;4324778150;0.0049632871380487255;0.005448991078163585;9;11;22;7.718400003795978;0.0;48099;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:48;DESKTOP-J1U1KVK;13.0;86.7;8459812864;7337664512;61.1;239447568384;146348646400;93098921984;1.9437866630754255;1.0113069446964462;0.0;0.0;220742828;4324779315;0.008843198607649733;0.007476867492304709;12;14;22;6.387400004314259;0.0;48100;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:49;DESKTOP-J1U1KVK;5.8;86.7;8459812864;7337553920;61.1;239447568384;146348646400;93098921984;0.541389162942129;0.007416289903316837;0.0;0.0;220743746;4324780127;0.006171273746752975;0.006976883373792156;10;13;22;7.246399996802211;0.0;48101;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:50;DESKTOP-J1U1KVK;9.1;86.7;8459812864;7338024960;61.1;239447568384;146348646400;93098921984;0.5311957402256611;0.00841683391202632;0.0;0.0;220744762;4324780937;0.006203033915350058;0.007780595627155134;11;15;22;7.399400004942436;0.0;48103;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:51;DESKTOP-J1U1KVK;25.5;86.9;8459812864;7348305920;61.1;239447568384;146348646400;93098921984;1.0597189417926494;0.23713990305849497;0.0;0.0;220745884;4324781925;0.007495182041228937;0.008511735071112215;12;15;22;7.253700001456309;0.0;48104;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:52;DESKTOP-J1U1KVK;7.2;86.8;8459812864;7341686784;61.1;239447568384;146348646400;93098921984;0.25600985889309547;0.10527941661002295;0.0;0.0;220746602;4324782823;0.006821197555031442;0.005453919648677701;9;11;22;6.976299999223556;0.0;48105;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:54;DESKTOP-J1U1KVK;24.7;86.9;8459812864;7347961856;61.1;239447568384;146348646400;93098921984;1.475772064616297;0.008806428777546999;0.0;0.0;220747545;4324783642;0.006222261222189798;0.007164337402350402;10;13;22;8.11239999893587;0.0;48106;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:55;DESKTOP-J1U1KVK;7.3;86.9;8459812864;7353389056;61.1;239447568384;146348646400;93098921984;0.4259497538699269;0.01250069929835655;0.0;0.0;220748743;4324786662;0.022861713036711636;0.009068984178139252;15;16;22;7.120100002794061;0.0;48107;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:56;DESKTOP-J1U1KVK;10.1;86.9;8459812864;7347412992;61.1;239447568384;146348646400;93098921984;0.15958076982759017;0.0;0.0;0;220750509;4324788822;0.016449204940852648;0.0134487481136786;23;23;22;7.087600002705585;0.0;48108;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:57;DESKTOP-J1U1KVK;14.9;86.8;8459812864;7341686784;61.1;239447568384;146348646400;93098921984;0.17425773501501543;0.009732479881157776;0.0;0.0;220751227;4324789924;0.008369518017895938;0.005453097946324214;9;11;22;7.5957999943057075;0.0;48109;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:58;DESKTOP-J1U1KVK;9.1;86.8;8459812864;7342628864;61.1;239447568384;146348646400;93098921984;0.2076297059209788;0.01761144827008302;0.0;0.0;220752013;4324791358;0.010887364839184342;0.005967551439050832;10;11;22;7.249900001625065;0.0;48110;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:51:59;DESKTOP-J1U1KVK;13.2;86.9;8459812864;7351504896;61.1;239447568384;146348646400;93098921984;0.21878096751901588;0.010197417977581249;0.0;0.0;220753121;4324792541;0.008986472339587529;0.008416746705209619;13;15;22;7.8177000032155775;0.0;48111;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:52:00;DESKTOP-J1U1KVK;10.4;87.0;8459812864;7357616128;61.1;239447568384;146348646400;93098921984;0.15297170444352337;0.0;0.0;0;220753981;4324801167;0.06589919871086485;0.00657005690834034;30;12;22;19.625900000391994;0.0;48112;não;não;não;não;não;não;não;não;sim;não;Saudável;100
+-2025-11-15 22:52:01;DESKTOP-J1U1KVK;7.3;86.9;8459812864;7351795712;61.1;239447568384;146348646400;93098921984;0.14654475143797313;0.03984185429719895;0.0;0.0;220755351;4324802231;0.007977913775577895;0.010272313789982817;14;19;22;40.3437000059057;0.0;48113;não;não;não;não;não;não;não;não;sim;não;Saudável;100
+-2025-11-15 22:52:02;DESKTOP-J1U1KVK;15.0;87.0;8459812864;7364120576;61.1;239447568384;146348646400;93098921984;0.4215900310829778;0.07657083897874598;0.0;0.0;220756887;4324803979;0.012898813768475978;0.011334426743923971;17;20;22;6.785400000808295;0.0;48114;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:52:03;DESKTOP-J1U1KVK;27.1;87.3;8459812864;7382618112;61.1;239447568384;146348646400;93098921984;6.833137355672931;0.21397162584135793;0.0;0.0;220757747;4324805035;0.008040592045672312;0.006548209431134648;10;12;22;7.37499999377178;0.0;48115;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:52:04;DESKTOP-J1U1KVK;33.4;87.3;8459812864;7389278208;61.1;239447568384;146348650496;93098917888;1.3746565290580193;0.19783908154686358;0.0;0.0;220758744;4324806320;0.009796208371871907;0.007600637935218904;12;14;22;7.347099999606144;0.0;48116;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:52:05;DESKTOP-J1U1KVK;9.3;87.3;8459812864;7386046464;61.1;239447568384;146348650496;93098917888;0.22272092704434882;0.029696123605913175;0.0;0.0;220771309;4324809059;0.020794538909113917;0.09539371354253975;16;17;22;6.430699999327771;0.0;48117;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:52:06;DESKTOP-J1U1KVK;24.3;87.3;8459812864;7387738112;61.1;239447568384;146348650496;93098917888;0.5885336223796884;0.019555705806920027;0.0;0.0;220772396;4324810065;0.00766361455218779;0.00828066502805977;13;15;22;6.183499994222075;0.0;48118;não;não;não;não;não;não;não;não;não;não;Saudável;100
+-2025-11-15 22:52:07;DESKTOP-J1U1KVK;32.0;88.7;8459812864;7504678912;61.1;239447568384;146348658688;93098909696;19.60829209446302;0.10121966509419475;0.0;0.0;220811833;4324853098;0.3282307485137047;0.3008025475596629;76;71;24;6.8577000056393445;0.0;48119;não;não;não;não;sim;não;não;não;não;não;Saudável;100
+-2025-11-15 22:52:08;DESKTOP-J1U1KVK;29.9;89.4;8459812864;7566995456;61.1;239447568384;146348658688;93098909696;0.639657985881114;0.1357413749108178;0.0;0.0;220959822;4324857613;0.034295581386527704;1.1241126896591025;57;25;24;6.329299998469651;0.0;48120;não;sim;não;não;sim;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:09;DESKTOP-J1U1KVK;26.6;89.5;8459812864;7568461824;61.1;239447568384;146348658688;93098909696;1.6658594219142255;0.11810025256439816;0.0;0.0;220960765;4324858432;0.006204830430150787;0.007144267516034423;10;13;24;7.972599996719509;0.0;48122;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:10;DESKTOP-J1U1KVK;31.3;91.3;8459812864;7724109824;61.1;239447568384;146348658688;93098909696;1.175675648820497;0.49125126363843874;0.0;0.0;220967516;4324860864;0.018361907573520565;0.0509709037947522;25;30;19;15.891800001554657;0.0;48123;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:11;DESKTOP-J1U1KVK;25.7;89.3;8459812864;7552172032;61.1;239447568384;146348662784;93098905600;1.2926795448110753;2.1711554326580385;0.0;0.0;220968965;4324862107;0.009302067137426834;0.010843680838400229;14;18;19;7.094100001268089;0.0;48124;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:13;DESKTOP-J1U1KVK;9.6;89.2;8459812864;7548964864;61.1;239447568384;146348662784;93098905600;0.9967195727412363;1.9078997791651278;0.0;0.0;220974567;4324863424;0.010021670816867428;0.042628245949955464;14;15;19;6.592500001715962;0.0;48125;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:14;DESKTOP-J1U1KVK;11.5;89.1;8459812864;7538548736;61.1;239447568384;146348662784;93098905600;0.4950056977007248;7.269698338601058;0.0;0.0;220975530;4324864236;0.007312515003030643;0.007752936467387628;11;14;19;26.802599997608922;0.0;48126;não;sim;não;não;não;não;não;não;sim;não;Alerta;70
+-2025-11-15 22:52:15;DESKTOP-J1U1KVK;9.1;89.3;8459812864;7551647744;61.1;239447568384;146348662784;93098905600;1.442750542082305;0.0;0.0;0;220981370;4324865692;0.009749124399785983;0.04319497109545024;14;17;19;7.0181999981286936;0.0;48127;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:16;DESKTOP-J1U1KVK;21.5;89.3;8459812864;7550971904;61.1;239447568384;146348662784;93098905600;0.37422966490813325;0.06715755125207837;0.0;0.0;220982334;4324866514;0.0062403159330463405;0.007318326714667484;10;13;19;7.144399998651352;0.0;48128;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:17;DESKTOP-J1U1KVK;18.6;89.4;8459812864;7561261056;61.1;239447568384;146348662784;93098905600;34.42580622688008;0.008804435507810118;0.0;0.0;220987957;4324869031;0.019106104540825064;0.04268320454233586;13;15;19;25.453899994317908;0.0;48129;não;sim;não;não;não;não;não;não;sim;não;Alerta;70
+-2025-11-15 22:52:18;DESKTOP-J1U1KVK;16.9;89.4;8459812864;7564427264;61.1;239447568384;146348662784;93098905600;0.679089149777163;0.09130996000382124;0.0;0.0;220988765;4324876138;0.06831560441595474;0.006477620834512484;27;13;19;16.599299997324124;0.0;48130;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:19;DESKTOP-J1U1KVK;15.5;89.5;8459812864;7573565440;61.1;239447568384;146348662784;93098905600;1.6591470793030365;0.0;0.0;0;220994648;4324880646;0.018995635857976277;0.04386908138515996;16;16;19;6.7698999991989695;0.0;48131;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:20;DESKTOP-J1U1KVK;10.0;89.6;8459812864;7577505792;61.1;239447568384;146348662784;93098905600;1.8504625984044467;0.013005259225734063;0.0;0.0;220995528;4324881531;0.006733619258535071;0.00669557621187668;11;14;18;30.771400000958238;0.0;48132;não;sim;não;não;não;não;não;não;sim;não;Alerta;70
+-2025-11-15 22:52:21;DESKTOP-J1U1KVK;10.8;89.6;8459812864;7578279936;61.1;239447568384;146348666880;93098901504;0.4600936317645505;0.127250305635668;0.0;0.0;221005103;4324890008;0.06285329257804716;0.07099448819568262;23;28;19;6.635199999436736;0.0;48133;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:22;DESKTOP-J1U1KVK;9.3;89.5;8459812864;7575109632;61.1;239447568384;146348666880;93098901504;0.489430178210767;0.007761486035058805;0.0;0.0;221005963;4324890820;0.006079830723150011;0.006439229583631786;10;12;19;7.014099996013101;0.0;48134;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:23;DESKTOP-J1U1KVK;8.0;89.6;8459812864;7576489984;61.1;239447568384;146348666880;93098901504;0.9170472517124806;0.0083876273022483;0.0;0.0;221021559;4324892709;0.014407751965469909;0.11895357313576954;22;52;19;6.133300004876219;0.0;48135;não;sim;não;não;sim;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:24;DESKTOP-J1U1KVK;12.8;89.7;8459812864;7586971648;61.1;239447568384;146348666880;93098901504;1.9407608604261712;0.0;0.0;0;221038449;4324894352;0.012491846893492045;0.12841588194222803;20;53;19;6.374500000674743;0.0;48136;não;sim;não;não;sim;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:25;DESKTOP-J1U1KVK;15.9;89.8;8459812864;7592824832;61.1;239447568384;146348666880;93098901504;4.302316910748993;0.011145898732510345;0.0;0.0;221044933;4324896225;0.014288797150151864;0.050159552195541114;23;27;19;27.198099996894598;0.0;48137;não;sim;não;não;não;não;não;não;sim;não;Alerta;70
+-2025-11-15 22:52:26;DESKTOP-J1U1KVK;11.7;89.8;8459812864;7600504832;61.1;239447568384;146348666880;93098901504;0.5623782867323636;0.7390344531004032;0.0;0.0;221045962;4324897038;0.006082396838408837;0.007017574704092853;10;13;19;7.386400000541471;0.0;48138;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:27;DESKTOP-J1U1KVK;22.2;90.0;8459812864;7611408384;61.1;239447568384;146348666880;93098901504;3.8590624070485213;0.24026552174402382;0.0;0.0;221051782;4324901163;0.03134001945735178;0.04421791836164542;18;18;19;8.268199999292847;0.0;48140;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:28;DESKTOP-J1U1KVK;11.3;90.2;8459812864;7630131200;61.1;239447568384;146348666880;93098901504;19.44434221216171;0.15953190519422888;0.0;0.0;221052728;4324906689;0.04200314168447482;0.007190548685036767;16;14;19;6.901300002937205;0.0;48141;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:29;DESKTOP-J1U1KVK;18.0;90.2;8459812864;7632691200;61.1;239447568384;146348666880;93098901504;1.0131679230463797;0.06912180427376859;0.0;0.0;221058512;4324913577;0.05231252518747359;0.04392793926892381;17;17;19;16.124300003866665;0.0;48142;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:31;DESKTOP-J1U1KVK;15.5;90.1;8459812864;7625547776;61.1;239447568384;146348666880;93098901504;2.4028721670733213;0.0931772779208948;0.0;0.0;221059913;4324917667;0.030799752472395667;0.010550233059615239;18;19;18;17.158799993922003;0.0;48143;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:32;DESKTOP-J1U1KVK;15.8;90.2;8459812864;7629631488;61.1;239447568384;146348666880;93098901504;0.7414696399295232;0.10369563033667836;0.0;0.0;221069324;4324925962;0.06287826792872388;0.07183404464888624;21;26;19;5.804199994599912;0.0;48144;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:33;DESKTOP-J1U1KVK;12.1;90.2;8459812864;7629234176;61.1;239447568384;146348666880;93098901504;0.8669915993400301;0.05116366734302753;0.038461538461538464;0.0;221070336;4324930058;0.030667166221635962;0.006572624883901093;13;12;19;7.319600001210347;0.0;48145;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:34;DESKTOP-J1U1KVK;12.0;90.2;8459812864;7628574720;61.1;239447568384;146348666880;93098901504;2.7391938206871735;0.1303712850233569;0.0;0.0;221075894;4324932568;0.019158192092641708;0.04242280145454287;14;15;19;6.62690000172006;0.0;48146;não;sim;não;não;não;não;não;não;não;não;Alerta;70
+-2025-11-15 22:52:35;DESKTOP-J1U1KVK;13.6;10.1;8459812864;7626002432;61.1;239447568384;146348666880;93098901504;3.0588384031696636;0.09616943339248486;0.0;0.0;221086063;4324935023;0.018676411112633268;0.07736066175330661;14;24;19;28.56199999951059;0.0;48147;não;não;não;não;não;não;não;não;sim;não;Saudável;100
+Index: .idea/VitalViewEtl.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/VitalViewEtl.iml b/.idea/VitalViewEtl.iml
+new file mode 100644
+--- /dev/null	(date 1763604495541)
++++ b/.idea/VitalViewEtl.iml	(date 1763604495541)
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<module type="JAVA_MODULE" version="4">
++  <component name="NewModuleRootManager" inherit-compiler-output="true">
++    <exclude-output />
++    <content url="file://$MODULE_DIR$" />
++    <orderEntry type="inheritedJdk" />
++    <orderEntry type="sourceFolder" forTests="false" />
++  </component>
++</module>
+\ No newline at end of file
+Index: src/main/java/GerImagens.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/GerImagens.java b/src/main/java/GerImagens.java
+new file mode 100644
+--- /dev/null	(date 1763604495547)
++++ b/src/main/java/GerImagens.java	(date 1763604495547)
+@@ -0,0 +1,92 @@
++import com.opencsv.CSVParserBuilder;
++import com.opencsv.CSVReader;
++import com.opencsv.CSVReaderBuilder;
++import org.json.JSONArray;
++import org.json.JSONObject;
++
++import java.io.FileReader;
++import java.io.FileWriter;
++import java.io.IOException;
++import java.nio.file.Files;
++import java.nio.file.Path;
++
++public class GerImagens {
++
++    public GerImagens(){}
++
++
++    public void converterParaJson(String nomeArq) {
++        nomeArq = "1_srv1_hsl.csv";
++        String caminhoJson = "1_srv1_hsl.json";
++
++        try (CSVReader reader = new CSVReaderBuilder(new FileReader(nomeArq))
++                .withCSVParser(new CSVParserBuilder().withSeparator(';').build())
++                .build()) {
++
++            String[] headers = reader.readNext();
++
++            if (headers == null) {
++                System.out.println("Arquivo CSV vazio ou inválido.");
++                return;
++            }
++
++            JSONArray jsonArray = new JSONArray();
++            String[] line;
++
++            while ((line = reader.readNext()) != null) {
++                JSONObject obj = new JSONObject();
++
++                for (int i = 0; i < headers.length && i < line.length; i++) {
++                    String chave = headers[i].trim();
++                    String valor = line[i].trim();
++
++                    if (valor.matches("^-?\\d+(\\.\\d+)?$")) {
++                        obj.put(chave, Double.parseDouble(valor));
++                    } else if (valor.equalsIgnoreCase("true") || valor.equalsIgnoreCase("false")) {
++                        obj.put(chave, Boolean.parseBoolean(valor));
++                    } else {
++                        obj.put(chave, valor);
++                    }
++                }
++
++                jsonArray.put(obj);
++            }
++
++            // Agora sim, salva como JSON MESMO:
++            try (FileWriter file = new FileWriter(caminhoJson)) {
++                file.write(jsonArray.toString(2)); // 2 = indentação bonitinha
++            }
++
++            System.out.println("Arquivo JSON gerado com sucesso: " + caminhoJson);
++
++        } catch (Exception e) {
++            e.printStackTrace();
++        }
++    }
++
++    public void gerarRelatorioJson(String nomeArq) throws IOException {
++        String json = Files.readString(Path.of(nomeArq));
++
++        JSONArray arr = new JSONArray(json);
++
++        JSONObject root = new JSONObject();
++        JSONObject resultado = new JSONObject();
++
++        JSONArray imagensRemoviveis = new JSONArray();
++
++        JSONObject imagemMaisPesada = new JSONObject();
++        imagemMaisPesada = arr.getJSONObject(0);
++
++        JSONObject crescimentoMensal = new JSONObject();
++
++        for(int i = 1; i < arr.length(); i++){
++            if(arr.getJSONObject(i).getDouble("tamanho") < imagemMaisPesada.getDouble("tamanho")){
++                imagemMaisPesada = arr.getJSONObject(i);
++            }
++        }
++
++        resultado.put("imagem_mais_pesada", imagemMaisPesada);
++
++
++    }
++}
