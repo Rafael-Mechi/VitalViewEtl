@@ -4,7 +4,6 @@ public class MainFiltro {
 
     public static void main(String[] args) {
 
-
         List<String> camposRede = List.of(
                 "Net_Down_(Mbps)",
                 "Net_Up_(Mbps)",
@@ -15,12 +14,24 @@ public class MainFiltro {
                 "Latencia_(ms)"
         );
 
+        /*
         FiltroJsonETL.filtrarCampos(
                 "saida.json",
                 "rede",
-                "rede.json",
+                "rede_completo.json",
                 camposRede
         );
+        */
 
+        // Só os último registro por máquina
+        int quantidadeUltimos = 1;
+
+        FiltroJsonETL.filtrarCamposUltimosPorMaquina(
+                "saida.json",
+                "rede",
+                "rede.json",
+                camposRede,
+                quantidadeUltimos
+        );
     }
 }
