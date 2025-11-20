@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 
 public class GerImagens {
 
@@ -65,6 +66,9 @@ public class GerImagens {
     }
 
     public void gerarRelatorioJson(String nomeArq) throws IOException {
+        Double somaMediaImagem = 0.0;
+        Double somaMediaMes = 0.0;
+
         String json = Files.readString(Path.of(nomeArq));
 
         JSONArray arr = new JSONArray(json);
@@ -79,6 +83,7 @@ public class GerImagens {
 
         JSONObject crescimentoMensal = new JSONObject();
 
+        // for para descobrir a imagem mais pesada
         for(int i = 1; i < arr.length(); i++){
             if(arr.getJSONObject(i).getDouble("tamanho") < imagemMaisPesada.getDouble("tamanho")){
                 imagemMaisPesada = arr.getJSONObject(i);
@@ -87,6 +92,28 @@ public class GerImagens {
 
         resultado.put("imagem_mais_pesada", imagemMaisPesada);
 
+        // for para adicionar imagem na lisa de imagens que pode ser deletadas
+        for(int i = 0; i < arr.length(); i++){
+            JSONObject img = new JSONObject();
 
+            String dataStr = arr.getJSONObject(i).getString("data_geracao");
+            LocalDate data = LocalDate.parse(dataStr);
+
+            if(data.plusYears(5).isBefore(LocalDate.now())){
+                imagensRemoviveis.put(img);
+            }
+        }
+        resultado.put("imagens_removives", imagensRemoviveis);
+
+        // for para calcular tamanho medio das imagens
+        for(int i = 0; i < arr.length(); i++){
+            somaMediaImagem = 0.0;
+
+            somaMediaImagem += arr.getJSONObject(i).getDouble("tamanho");
+        }
+
+        Double tamandoMedioImagem = somaMediaImagem / arr.length();
+
+        // calculo para 
     }
 }
