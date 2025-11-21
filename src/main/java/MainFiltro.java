@@ -1,3 +1,4 @@
+import java.io.File;
 import java.util.List;
 
 public class MainFiltro {
@@ -14,23 +15,30 @@ public class MainFiltro {
                 "Latencia_(ms)"
         );
 
-        /*
-        FiltroJsonETL.filtrarCampos(
-                "saida.json",
-                "rede",
-                "rede_completo.json",
-                camposRede
-        );
-        */
-
-        // Só os último registro por máquina
+        // quantidade de registros desejados
         int quantidadeUltimos = 1;
 
-        FiltroJsonETL.filtrarCamposUltimosPorMaquina(
-                "saida.json",
-                "rede",
-                camposRede,
-                quantidadeUltimos
-        );
+        // pasta onde estão separados por servidor
+        File pasta = new File("saida_por_servidor");
+
+        for (File json : pasta.listFiles()) {
+
+            if (json.getName().startsWith("saida_") && json.getName().endsWith(".json")) {
+
+                String hostname = json.getName()
+                        .replace("saida_", "")
+                        .replace(".json", "");
+
+                System.out.println("Filtrando servidor: " + hostname);
+
+                FiltroJsonETL.filtrarCamposUltimosPorMaquina(
+                        json.getAbsolutePath(),
+                        "rede",
+                        camposRede,
+                        quantidadeUltimos
+                );
+            }
+        }
     }
+
 }

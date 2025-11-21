@@ -1,0 +1,11 @@
+[{
+  "Conexões_TCP_ESTABLISHED": 55,
+  "Pacotes_IN_(intervalo)": 33,
+  "Net_Up_(Mbps)": 0.0510093464191175,
+  "Pacotes_OUT_(intervalo)": 36,
+  "Data_da_Coleta": "2025-11-14 23:33:34",
+  "Latencia_(ms)": 19.37720000023546,
+  "Perda_de_Pacotes_(%)": "",
+  "Nome_da_Maquina": "DESKTOP-MS6GAMF",
+  "Net_Down_(Mbps)": 0.030363170215093247
+}]

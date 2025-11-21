@@ -6,15 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/captura_principal.csv" beforeDir="false" afterPath="$PROJECT_DIR$/capturas/captura_srv2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/captura_srv1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/capturas/captura_srv1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rede/rede.json" beforeDir="false" afterPath="$PROJECT_DIR$/rede/rede.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/saida.csv" beforeDir="false" afterPath="$PROJECT_DIR$/saida.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/saida.json" beforeDir="false" afterPath="$PROJECT_DIR$/saida.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Alerta.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Alerta.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/FiltroJsonETL.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/FiltroJsonETL.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/LeituraCsv.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saida_srv1.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/saida_srv2.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/MainFiltro.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/MainFiltro.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,6 +71,7 @@
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\User\OneDrive - SPTech School\Área de Trabalho\Sptech\Segundo Semestre\VitalViewEtl" />
+      <recent name="C:\Users\User\OneDrive - SPTech School\Área de Trabalho\Sptech\Segundo Semestre\VitalViewEtl\saida_por_servidor" />
       <recent name="C:\Users\User\OneDrive - SPTech School\Área de Trabalho\Sptech\Segundo Semestre\VitalViewEtl\capturas" />
     </key>
   </component>
