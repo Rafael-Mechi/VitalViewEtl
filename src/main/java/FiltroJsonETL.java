@@ -51,7 +51,6 @@ public class FiltroJsonETL {
     public static void filtrarCamposUltimosPorMaquina(
             String origem,
             String pastaDestino,
-            String arquivoDestino,
             List<String> camposDesejados,
             Integer quantidadeUltimos
     ) {
@@ -59,35 +58,26 @@ public class FiltroJsonETL {
             String jsonStr = Files.readString(Paths.get(origem));
             JSONArray jsonArrayOriginal = new JSONArray(jsonStr);
 
-            // guardar todos os servidores em uma listinha
-            List<String> maquinas = new ArrayList<>();
-
+            Set<String> maquinas = new HashSet<>();
             for (Object obj : jsonArrayOriginal) {
                 JSONObject original = (JSONObject) obj;
-                String nomeMaquina = original.getString("Nome_da_Maquina");
-                if (!maquinas.contains(nomeMaquina)) {
-                    maquinas.add(nomeMaquina);
-                }
+                maquinas.add(original.getString("Nome_da_Maquina"));
             }
-
-            JSONArray jsonFiltrado = new JSONArray();
 
             for (String maquina : maquinas) {
 
+                JSONArray jsonMaquina = new JSONArray();
                 List<JSONObject> registrosMaquina = new ArrayList<>();
 
                 for (Object obj : jsonArrayOriginal) {
                     JSONObject original = (JSONObject) obj;
-                    String nomeMaquina = original.getString("Nome_da_Maquina");
 
-                    if (nomeMaquina.equals(maquina)) {
+                    if (original.getString("Nome_da_Maquina").equals(maquina)) {
                         JSONObject novo = new JSONObject();
 
-                        // Campos fixos
-                        novo.put("Nome_da_Maquina", nomeMaquina);
+                        novo.put("Nome_da_Maquina", maquina);
                         novo.put("Data_da_Coleta", original.get("Data_da_Coleta"));
 
-                        // Campos de rede que eu quero
                         for (String campo : camposDesejados) {
                             if (original.has(campo)) {
                                 novo.put(campo, original.get(campo));
@@ -98,23 +88,26 @@ public class FiltroJsonETL {
                     }
                 }
 
-                // quanto que eu quero
                 int tamanho = registrosMaquina.size();
                 int inicio = Math.max(0, tamanho - quantidadeUltimos);
 
                 for (int i = inicio; i < tamanho; i++) {
-                    jsonFiltrado.put(registrosMaquina.get(i));
+                    jsonMaquina.put(registrosMaquina.get(i));
                 }
+
+                Path dirMaquina = Paths.get(pastaDestino, maquina);
+                Files.createDirectories(dirMaquina);
+
+                Path destino = dirMaquina.resolve("rede_" + maquina + ".json");
+
+                Files.writeString(destino, jsonMaquina.toString(2));
+
+                System.out.println("Arquivo gerado para " + maquina);
             }
-
-            Path destino = Paths.get(pastaDestino, arquivoDestino);
-            Files.createDirectories(destino.getParent());
-            Files.writeString(destino, jsonFiltrado.toString(2));
-
-            System.out.println("Arquivo gerado em: " + destino.toAbsolutePath());
 
         } catch (Exception e) {
             System.err.println("Erro ao processar: " + e.getMessage());
         }
     }
+
 }

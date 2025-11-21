@@ -29,7 +29,6 @@ public class MainFiltro {
         FiltroJsonETL.filtrarCamposUltimosPorMaquina(
                 "saida.json",
                 "rede",
-                "rede.json",
                 camposRede,
                 quantidadeUltimos
         );

@@ -78,86 +78,126 @@ public class Alerta {
         this.fkComponente = fkComponente;
     }
 
-    public void salvaTabelaAlerta(String nomeArq) {
+    public void salvaTabelaAlerta(String nomeArq, String hostname) {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
-        System.out.println("Pegando informações dos limites do servidor 'srv1'");
+        System.out.println("Pegando informações dos limites do servidor");
         String sqlSelectCpu = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and  t.nome = 'Cpu'";
+                "where hostname = ? and  t.nome = 'Cpu'";
 
         String sqlSelectRam = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Memória'";
+                "where hostname = ? and t.nome = 'Memória'";
 
         String sqlSelectDisco = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Disco'";
+                "where hostname = ? and t.nome = 'Disco'";
 
         String sqlSelectDown =
                 "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
+                        "from limiteMetrica  lr " +
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'Download'";
+                        "inner join metrica r on r.idMetrica = lr.fkMetrica " +
+                        "where s.hostname = ? and r.metrica = 'Download'";
 
         String sqlSelectUpload =
                 "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
+                        "from limiteMetrica lr " +
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'Upload'";
+                        "inner join metrica r on r.idMetrica = lr.fkMetrica " +
+                        "where s.hostname = ? and r.metrica = 'Upload'";
 
         String sqlSelectPacoteIn =
                 "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
+                        "from limiteMetrica lr " +
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'PacoteIn'";
+                        "inner join metrica r on r.idMetrica = lr.fkMetrica " +
+                        "where s.hostname = ? and r.metrica = 'PacoteIn'";
 
         String sqlSelectPacoteOut =
                 "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
+                        "from limiteMetrica lr " +
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'PacoteOut'";
+                        "inner join metrica r on r.idMetrica = lr.fkMetrica " +
+                        "where s.hostname = ? and r.metrica = 'PacoteOut'";
 
         String sqlSelectConexao =
                 "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
+                        "from limiteMetrica lr " +
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'Conexao'";
+                        "inner join metrica r on r.idMetrica = lr.fkMetrica " +
+                        "where s.hostname = ? and r.metrica = 'Conexao'";
 
         String sqlSelectLatencia =
                 "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
+                        "from limiteMetrica lr " +
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'Latencia'";
+                        "inner join metrica r on r.idMetrica = lr.fkMetrica " +
+                        "where s.hostname = ? and r.metrica = 'Latencia'";
 
         String sqlSelectPerdaPacote =
                 "select lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
+                        "from limiteMetrica lr " +
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1' and r.metrica = 'PerdaPacote'";
+                        "inner join metrica r on r.idMetrica = lr.fkMetrica " +
+                        "where s.hostname = ? and r.metrica = 'PerdaPacote'";
 
 
-        List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteRam = template.query(sqlSelectRam, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteDisco = template.query(sqlSelectDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteDown = template.query(sqlSelectDown, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteUpload = template.query(sqlSelectUpload, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimitePacoteIn = template.query(sqlSelectPacoteIn, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimitePacoteOut = template.query(sqlSelectPacoteOut, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteConexao = template.query(sqlSelectConexao, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteLatencia = template.query(sqlSelectLatencia, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimitePerdaPacote = template.query(sqlSelectPerdaPacote, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteCpu =
+                template.query(sqlSelectCpu,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimiteRam =
+                template.query(sqlSelectRam,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimiteDisco =
+                template.query(sqlSelectDisco,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimiteDown =
+                template.query(sqlSelectDown,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimiteUpload =
+                template.query(sqlSelectUpload,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimitePacoteIn =
+                template.query(sqlSelectPacoteIn,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimitePacoteOut =
+                template.query(sqlSelectPacoteOut,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimiteConexao =
+                template.query(sqlSelectConexao,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimiteLatencia =
+                template.query(sqlSelectLatencia,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
+        List<ServidorComponente> capturaLimitePerdaPacote =
+                template.query(sqlSelectPerdaPacote,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname
+                );
 
         Double limiteCpu = capturaLimiteCpu.get(0).getLimite();
         Double limiteRam = capturaLimiteRam.get(0).getLimite();
@@ -175,9 +215,10 @@ public class Alerta {
                         "from componentes c " +
                         "join servidores s on c.fkServidor = s.idServidor " +
                         "join tipoComponente t on t.idTipo = c.fkTipo " +
-                        "where s.hostname = 'srv1' and t.nome = 'Rede'";
+                        "where s.hostname = ? and t.nome = 'Rede'";
 
-        Integer fkComponenteRede = template.queryForObject(sqlSelectCompRede, Integer.class);
+        Integer fkComponenteRede =
+                template.queryForObject(sqlSelectCompRede, Integer.class, hostname);
 
         Reader arq = null;
         BufferedReader entrada = null;

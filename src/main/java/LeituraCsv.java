@@ -247,7 +247,7 @@ public class LeituraCsv {
     }
 
 
-    public void leImportaArquivoCsv(String nomeArq) {
+    public void leImportaArquivoCsv(String nomeArq, String hostname) {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
@@ -257,15 +257,18 @@ public class LeituraCsv {
                         "from componentes c " +
                         "inner join servidores s on c.fkServidor = s.idServidor " +
                         "inner join tipoComponente t on t.idTipo = c.fkTipo " +
-                        "where s.hostname = 'srv1' " +
+                        "where s.hostname = ? " +
                         "union all " +
                         "select s.hostname, lr.limite, r.metrica as nome " +
-                        "from limiteRede lr " +
+                        "from limiteMetrica lr " +
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
-                        "inner join rede r on r.idRede = lr.fkRede " +
-                        "where s.hostname = 'srv1'";
-        List<ServidorComponente> capturas = template.query(sqlSelect, new BeanPropertyRowMapper<>(ServidorComponente.class));
-
+                        "inner join metrica r on r.idMetrica = lr.fkMetrica " +
+                        "where s.hostname = ?";
+        List<ServidorComponente> capturas =
+                template.query(sqlSelect,
+                        new BeanPropertyRowMapper<>(ServidorComponente.class),
+                        hostname, hostname
+                );
 
         Reader arq = null;
         BufferedReader entrada = null;
@@ -416,10 +419,10 @@ public class LeituraCsv {
 
     }
 
-    public void converterParaJson() {
+    public void converterParaJson(String hostname) {
 
         String caminhoCsv = "saida.csv";
-        String caminhoJson = "saida.json";
+        String caminhoJson = "saida_" + hostname + ".json";
 
         try (CSVReader reader = new CSVReaderBuilder(new FileReader(caminhoCsv))
                 .withCSVParser(new CSVParserBuilder().withSeparator(';').build())
@@ -454,12 +457,11 @@ public class LeituraCsv {
                 jsonArray.put(obj);
             }
 
-            // Agora sim, salva como JSON MESMO:
             try (FileWriter file = new FileWriter(caminhoJson)) {
-                file.write(jsonArray.toString(2)); // 2 = indentação bonitinha
+                file.write(jsonArray.toString(2));
             }
 
-            System.out.println("Arquivo JSON gerado com sucesso: " + caminhoJson);
+            System.out.println("JSON gerado: " + caminhoJson);
 
         } catch (Exception e) {
             e.printStackTrace();
