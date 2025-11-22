@@ -4,85 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/saida_srv1.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saida_srv2.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/MainFiltro.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/MainFiltro.java" afterDir="false" />
+    <list default="true" id="cf014595-d9c3-4011-a9ac-c6407a9a83b1" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/GerImagens.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/GerImagens.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Class" />
-      </list>
-    </option>
-  </component>
-  <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;annaluizasegarra01&quot;
-  }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Rafael-Mechi/VitalViewEtl.git&quot;,
-    &quot;accountId&quot;: &quot;a32e624b-1b1b-4629-a0d8-f97c284f183e&quot;
-  }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 4
-}</component>
-  <component name="ProjectId" id="342VRdCqfWANMzL7FSZwpt2qF3j" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
   </component>
-  <component name="ProjectViewState">
-    <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showLibraryContents" value="true" />
-  </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;Application.MainFiltro.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/User/OneDrive - SPTech School/Área de Trabalho/Sptech/Segundo Semestre/VitalViewEtl&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "git-widget-placeholder": "main"
   }
-}</component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\User\OneDrive - SPTech School\Área de Trabalho\Sptech\Segundo Semestre\VitalViewEtl" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\User\OneDrive - SPTech School\Área de Trabalho\Sptech\Segundo Semestre\VitalViewEtl" />
-      <recent name="C:\Users\User\OneDrive - SPTech School\Área de Trabalho\Sptech\Segundo Semestre\VitalViewEtl\saida_por_servidor" />
-      <recent name="C:\Users\User\OneDrive - SPTech School\Área de Trabalho\Sptech\Segundo Semestre\VitalViewEtl\capturas" />
-    </key>
-  </component>
+}]]></component>
   <component name="TaskManager">
-    <task active="true" id="Default" summary="Default task">
-      <changelist id="47ee19cd-47c8-46d7-9c69-57e8f1d1f1ca" name="Changes" comment="" />
-      <created>1760411650387</created>
-      <option name="number" value="Default" />
-      <option name="presentableId" value="Default" />
-      <updated>1760411650387</updated>
-    </task>
     <servers />
   </component>
 </project>
