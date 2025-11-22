@@ -1,11 +1,6 @@
-import com.opencsv.CSVParserBuilder;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,10 +10,9 @@ public class GerImagens extends Conversor{
 
     public GerImagens(){}
 
-    public void gerarRelatorioJson(String nomeArq) throws IOException {
+    public String gerarRelatorioJson(String json) throws IOException {
         Double somaTamanho = 0.0;
 
-        String json = Files.readString(Path.of(nomeArq));
         JSONArray arr = new JSONArray(json);
 
         JSONObject resultado = new JSONObject();
@@ -102,6 +96,6 @@ public class GerImagens extends Conversor{
 
         resultado.put("crescimento_mensal", quantMeses);
 
-        Files.writeString(Path.of(nomeArq), resultado.toString(4));
+        return resultado.toString();
     }
 }

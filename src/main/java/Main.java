@@ -1,16 +1,25 @@
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
-public class Main {
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.lambda.runtime.events.S3Event;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-    private static String extrairHostname(String nomeArquivo) {
-        return nomeArquivo
-                .replace("captura_", "")
-                .replace("id_servidor_", "")
-                .replace(".csv", "")
-                .trim();
-    }
+public class Main implements RequestHandler<S3Event, String>{
+    private final AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
+    private static final String DESTINATION_BUCKET = "bucket-trusted-vw";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static String pegarNomeArquivo(){
         File raiz = new File(".");
@@ -24,21 +33,48 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
-        JdbcTemplate template = databaseConfiguration.getTemplate();
+//        DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
+//        JdbcTemplate template = databaseConfiguration.getTemplate();
 
-        String nomeArquivo = pegarNomeArquivo();
+    }
 
-        if(nomeArquivo.contains("imagens")){
-            GerImagens gi = new GerImagens();
-            String arquivoJson = gi.converterParaJson(nomeArquivo);
+    @Override
+    public String handleRequest(S3Event s3Event, Context context) {
+        // arquivo que chegou
+        String sourceBucket = s3Event.getRecords().get(0).getS3().getBucket().getName();
+        String sourceKey = s3Event.getRecords().get(0).getS3().getObject().getKey();
 
-            gi.gerarRelatorioJson(arquivoJson);
+        context.getLogger().log("Processando arquivo: " + sourceBucket + "/" + sourceKey);
+
+        try {
+
+            // 1. pegar CSV do bucket de origem
+            S3Object s3Object = s3Client.getObject(sourceBucket, sourceKey);
+            InputStream csvStream = s3Object.getObjectContent();
+
+            // 2. converter CSV → JSON
+            GerImagens ger = new GerImagens();
+            String json = ger.converterParaJson(csvStream);
+
+            // 3. gerar relatório final
+            String relatorioJson = ger.gerarRelatorioJson(json);
+
+            // 4. enviar pro bucket trusted
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType("application/json");
+
+            s3Client.putObject(
+                    DESTINATION_BUCKET,
+                    sourceKey.replace(".csv", ".json"),
+                    new ByteArrayInputStream(relatorioJson.getBytes(StandardCharsets.UTF_8)),
+                    metadata
+            );
+
+            return "Processado com sucesso: " + sourceKey;
+
+        } catch (Exception ex) {
+            context.getLogger().log("ERRO:" + ex.getMessage());
+            return "Falha ao processar o arquivo.";
         }
-
-        else if(nomeArquivo.contains("processos")){
-            //...
-        }
-
     }
 }
