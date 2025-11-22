@@ -1,5 +1,6 @@
 import org.springframework.jdbc.core.JdbcTemplate;
 import java.io.File;
+import java.io.IOException;
 
 public class Main {
 
@@ -11,32 +12,33 @@ public class Main {
                 .trim();
     }
 
-    public static void main(String[] args) {
+    public static String pegarNomeArquivo(){
+        File raiz = new File(".");
+        for (File f : raiz.listFiles()) {
+            if (f.isFile() && f.getName().endsWith(".csv")) {
+                return f.getName();
+            }
+        }
+        return null;
+    }
+
+    public static void main(String[] args) throws IOException {
 
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
-        Alerta alerta = new Alerta();
-        LeituraCsv leituraCsv = new LeituraCsv();
+        String nomeArquivo = pegarNomeArquivo();
 
-        File pasta = new File("capturas/");
+        if(nomeArquivo.contains("imagens")){
+            GerImagens gi = new GerImagens();
+            String arquivoJson = gi.converterParaJson(nomeArquivo);
 
-        for (File f : pasta.listFiles()) {
-            if (f.getName().endsWith(".csv")) {
-
-                String hostname = extrairHostname(f.getName());
-
-                System.out.println("Processando CSV do servidor: " + hostname);
-                System.out.println("Arquivo: " + f.getName());
-
-                leituraCsv.leImportaArquivoCsv(f.getAbsolutePath(), hostname);
-                alerta.salvaTabelaAlerta(f.getAbsolutePath(), hostname);
-
-                leituraCsv.converterParaJson(hostname);
-            }
+            gi.gerarRelatorioJson(arquivoJson);
         }
 
-        ControleSistema cs = new ControleSistema();
-        cs.calcularProdutividade();
+        else if(nomeArquivo.contains("processos")){
+            //...
+        }
+
     }
 }

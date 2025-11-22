@@ -11,59 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 
-public class GerImagens {
+public class GerImagens extends Conversor{
 
     public GerImagens(){}
-
-
-    public void converterParaJson(String nomeArq) {
-        nomeArq = "1_srv1_hsl.csv";
-        String caminhoJson = "1_srv1_hsl.json";
-
-        try (CSVReader reader = new CSVReaderBuilder(new FileReader(nomeArq))
-                .withCSVParser(new CSVParserBuilder().withSeparator(';').build())
-                .build()) {
-
-            String[] headers = reader.readNext();
-
-            if (headers == null) {
-                System.out.println("Arquivo CSV vazio ou inválido.");
-                return;
-            }
-
-            JSONArray jsonArray = new JSONArray();
-            String[] line;
-
-            while ((line = reader.readNext()) != null) {
-                JSONObject obj = new JSONObject();
-
-                for (int i = 0; i < headers.length && i < line.length; i++) {
-                    String chave = headers[i].trim();
-                    String valor = line[i].trim();
-
-                    if (valor.matches("^-?\\d+(\\.\\d+)?$")) {
-                        obj.put(chave, Double.parseDouble(valor));
-                    } else if (valor.equalsIgnoreCase("true") || valor.equalsIgnoreCase("false")) {
-                        obj.put(chave, Boolean.parseBoolean(valor));
-                    } else {
-                        obj.put(chave, valor);
-                    }
-                }
-
-                jsonArray.put(obj);
-            }
-
-            // Agora sim, salva como JSON MESMO:
-            try (FileWriter file = new FileWriter(caminhoJson)) {
-                file.write(jsonArray.toString(2)); // 2 = indentação bonitinha
-            }
-
-            System.out.println("Arquivo JSON gerado com sucesso: " + caminhoJson);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     public void gerarRelatorioJson(String nomeArq) throws IOException {
         Double somaTamanho = 0.0;
@@ -152,6 +102,6 @@ public class GerImagens {
 
         resultado.put("crescimento_mensal", quantMeses);
 
-        Files.writeString(Path.of("relatorio.json"), resultado.toString(4));
+        Files.writeString(Path.of(nomeArq), resultado.toString(4));
     }
 }
