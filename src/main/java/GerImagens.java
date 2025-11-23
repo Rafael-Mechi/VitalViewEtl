@@ -96,6 +96,7 @@ public class GerImagens extends Conversor{
 
         resultado.put("crescimento_mensal", quantMeses);
 
+        System.out.println("Relatório JSON de imagens finalizado");
         return resultado.toString();
     }
 }

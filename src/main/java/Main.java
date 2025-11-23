@@ -33,8 +33,8 @@ public class Main implements RequestHandler<S3Event, String>{
 
     public static void main(String[] args) throws IOException {
 
-//        DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
-//        JdbcTemplate template = databaseConfiguration.getTemplate();
+        DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
+        JdbcTemplate template = databaseConfiguration.getTemplate();
 
     }
 
@@ -52,23 +52,33 @@ public class Main implements RequestHandler<S3Event, String>{
             S3Object s3Object = s3Client.getObject(sourceBucket, sourceKey);
             InputStream csvStream = s3Object.getObjectContent();
 
-            // 2. converter CSV → JSON
-            GerImagens ger = new GerImagens();
-            String json = ger.converterParaJson(csvStream);
+            if(sourceKey.contains("imagens")){
+                context.getLogger().log("Entrei no if que contém imagens");
+                // 2. converter CSV → JSON
+                GerImagens ger = new GerImagens();
+                String json = ger.converterParaJson(csvStream);
 
-            // 3. gerar relatório final
-            String relatorioJson = ger.gerarRelatorioJson(json);
+                // 3. gerar relatório final
+                String relatorioJson = ger.gerarRelatorioJson(json);
 
-            // 4. enviar pro bucket trusted
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType("application/json");
+                // 4. enviar pro bucket trusted
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentType("application/json");
 
-            s3Client.putObject(
-                    DESTINATION_BUCKET,
-                    sourceKey.replace(".csv", ".json"),
-                    new ByteArrayInputStream(relatorioJson.getBytes(StandardCharsets.UTF_8)),
-                    metadata
-            );
+                context.getLogger().log("Enviando para o bucket trusted");
+
+                s3Client.putObject(
+                        DESTINATION_BUCKET,
+                        sourceKey.replace(".csv", ".json"),
+                        new ByteArrayInputStream(relatorioJson.getBytes(StandardCharsets.UTF_8)),
+                        metadata
+                );
+            }
+
+            else if(sourceKey.contains("processos")){
+                //...
+            }
+
 
             return "Processado com sucesso: " + sourceKey;
 
