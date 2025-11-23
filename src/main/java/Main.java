@@ -16,7 +16,7 @@ import com.amazonaws.services.lambda.runtime.events.S3Event;
 
 public class Main implements RequestHandler<S3Event, String>{
     private final AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
-    private static final String DESTINATION_BUCKET = "bucket-trusted-vw";
+    private static final String DESTINATION_BUCKET = "trusted-2011";
 
     public static void main(String[] args) throws IOException {
 
@@ -63,7 +63,23 @@ public class Main implements RequestHandler<S3Event, String>{
             }
 
             else if(sourceKey.contains("processos")){
-                //...
+                context.getLogger().log("Entrei no if que contém processos!!");
+                // 2. converter CSV → JSON
+                Conversor conversor = new Conversor();
+                String processosJson = conversor.converterParaJson(csvStream);
+
+                // 4. enviar pro bucket trusted
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentType("application/json");
+
+                context.getLogger().log("Enviando para o bucket trusted");
+
+                s3Client.putObject(
+                        DESTINATION_BUCKET,
+                        sourceKey.replace(".csv", ".json"),
+                        new ByteArrayInputStream(processosJson.getBytes(StandardCharsets.UTF_8)),
+                        metadata
+                );
             }
 
 
