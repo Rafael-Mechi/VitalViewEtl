@@ -7,29 +7,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.lambda.runtime.events.S3Event;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Main implements RequestHandler<S3Event, String>{
     private final AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
     private static final String DESTINATION_BUCKET = "bucket-trusted-vw";
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    public static String pegarNomeArquivo(){
-        File raiz = new File(".");
-        for (File f : raiz.listFiles()) {
-            if (f.isFile() && f.getName().endsWith(".csv")) {
-                return f.getName();
-            }
-        }
-        return null;
-    }
 
     public static void main(String[] args) throws IOException {
 
