@@ -82,6 +82,46 @@ public class Main implements RequestHandler<S3Event, String>{
                 );
             }
 
+            else if (sourceKey.contains("principal")) {
+
+                context.getLogger().log("Entrei no if que contém o principal!");
+
+                // Extrair o hostname do nome do arquivo
+                // Formato: idServidor_nomeServidor_nomeHospital_principal.csv
+                String[] partes = sourceKey.split("_");
+                String hostname = partes[1];
+
+                context.getLogger().log("Hostname extraído: " + hostname);
+
+                S3Object s3ObjectAlertas = s3Client.getObject(sourceBucket, sourceKey);
+                InputStream csvStreamAlertas = s3ObjectAlertas.getObjectContent();
+
+                // Gerar alertas lendo o CSV direto do bucket
+                Alerta alerta = new Alerta();
+                alerta.salvaTabelaAlerta(csvStreamAlertas, hostname);
+
+                S3Object s3ObjectJson = s3Client.getObject(sourceBucket, sourceKey);
+                InputStream csvStreamJson = s3ObjectJson.getObjectContent();
+
+                // Converter CSV to JSON
+                Conversor conversor = new Conversor();
+                String processosJson = conversor.converterParaJson(csvStreamJson);
+
+                // Enviar JSON para o bucket trusted
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentType("application/json");
+
+                context.getLogger().log("Enviando para o bucket trusted");
+
+                s3Client.putObject(
+                        DESTINATION_BUCKET,
+                        sourceKey.replace(".csv", ".json"),
+                        new ByteArrayInputStream(processosJson.getBytes(StandardCharsets.UTF_8)),
+                        metadata
+                );
+
+                context.getLogger().log("Processo principal finalizado com sucesso!");
+            }
 
             return "Processado com sucesso: " + sourceKey;
 

@@ -1,11 +1,11 @@
 [{
   "Conexões_TCP_ESTABLISHED": 22,
   "Pacotes_IN_(intervalo)": 56,
-  "Net_Up_(Mbps)": 0.0862595030747717,
+  "Net_Up_(Mbps)": 25.0862595030747717,
   "Pacotes_OUT_(intervalo)": 39,
   "Data_da_Coleta": "2025-11-16 22:49:28",
   "Latencia_(ms)": 13.197799999034032,
-  "Perda_de_Pacotes_(%)": "",
+  "Perda_de_Pacotes_(%)": "0.3",
   "Nome_da_Maquina": "srv1",
-  "Net_Down_(Mbps)": 0.0326473779002367
+  "Net_Down_(Mbps)": 48.0326473779002367
 }]

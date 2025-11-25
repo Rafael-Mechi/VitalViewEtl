@@ -3,6 +3,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
@@ -78,11 +79,13 @@ public class Alerta {
         this.fkComponente = fkComponente;
     }
 
-    public void salvaTabelaAlerta(String nomeArq, String hostname) {
+    public void salvaTabelaAlerta(InputStream csvStream, String hostname) {
+
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
         System.out.println("Pegando informações dos limites do servidor");
+
         String sqlSelectCpu = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
@@ -220,17 +223,7 @@ public class Alerta {
         Integer fkComponenteRede =
                 template.queryForObject(sqlSelectCompRede, Integer.class, hostname);
 
-        Reader arq = null;
-        BufferedReader entrada = null;
-        // Bloco try-catch para abrir o arquivo
-        try {
-            arq = new InputStreamReader(new FileInputStream(nomeArq), "UTF-8");
-
-            entrada = new BufferedReader(arq);
-        } catch (IOException erro) {
-            System.out.println("Erro na abertura do arquivo");
-            System.exit(1);
-        }
+        BufferedReader entrada = new BufferedReader(new InputStreamReader(csvStream, StandardCharsets.UTF_8));
 
         System.out.println("Lendo o csv e escrevendo a saída");
 
@@ -618,16 +611,12 @@ public class Alerta {
                 linha = entrada.readLine();
             } // final do while
         } // final do try
-        catch (IOException erro) {
-            System.out.println("Erro ao ler o arquivo");
-            erro.printStackTrace();
-        } finally {
-            try {
-                entrada.close();
-                arq.close();
-            } catch (IOException erro) {
-                System.out.println("Erro ao fechar o arquivo");
-            }
+     catch (IOException e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            entrada.close();
+        } catch (Exception ignore) {}
         }
     }
 
