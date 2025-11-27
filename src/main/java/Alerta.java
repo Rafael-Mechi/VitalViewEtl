@@ -1,6 +1,7 @@
 import okhttp3.*;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import com.amazonaws.services.lambda.runtime.Context;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -94,7 +95,7 @@ public class Alerta {
         String sqlSelectRam = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = ? and t.nome = 'Memória'";
+                "where hostname = ? and t.nome = 'Memoria'";
 
         String sqlSelectDisco = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
@@ -213,6 +214,17 @@ public class Alerta {
         Double limiteLatencia = capturaLimiteLatencia.get(0).getLimite();
         Double limitePerdaPacote = capturaLimitePerdaPacote.get(0).getLimite();
 
+        System.out.println(limiteCpu);
+        System.out.println(limiteRam);
+        System.out.println(limiteDisco);
+        System.out.println(limiteDown);
+        System.out.println(limiteUp);
+        System.out.println(limiteIn);
+        System.out.println(limiteOut);
+        System.out.println(limiteConexao);
+        System.out.println(limiteLatencia);
+        System.out.println(limitePerdaPacote);
+
         String sqlSelectCompRede =
                 "select c.idComponente " +
                         "from componentes c " +
@@ -228,9 +240,11 @@ public class Alerta {
         System.out.println("Lendo o csv e escrevendo a saída");
 
         try {
-            String[] registro;      // registro eh um vetor que armazenara cada parte da linha do arquivo
+            String[] registro;
+            // registro eh um vetor que armazenara cada parte da linha do arquivo
             // readLine() eh usado   para ler uma linha inteira do arquivo
             // Le a primeira linha do arquivo, que eh o cabecalho
+
             String linha = entrada.readLine(); // linha eh a primeira linha do arquivo
 
             // separa cada item da linha usando o delimitador ;
@@ -411,6 +425,7 @@ public class Alerta {
                     podeRegistrarCpu = true;
                 }
 
+                //testando se ele vai mesmo sem isso
                 if (contRam == 3) {
                     podeRegistrarRam = true;
                 }
@@ -457,10 +472,10 @@ public class Alerta {
                         template.update(sqlInsertAlertaCpu, dataHoraColeta, usoCPU, 1);
                         podeRegistrarCpu = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta CPU: " + usoCPU + "%" + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta CPU: " + usoCPU + "% - " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
+
+                        System.out.println("ALERTA JIRA CPU");
                     }
 
                 }
@@ -469,16 +484,16 @@ public class Alerta {
                     String tipoComponente = sc.getNome();
                     Double limite = sc.getLimite();
 
-                    if (tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite && podeRegistrarRam && contRam >= 3) {
+                    if (tipoComponente.equalsIgnoreCase("memoria") && usoRAM > limite && podeRegistrarRam && contRam >= 3) {
                         String sqlInsertAlertaRam = "insert into alerta (data_alerta, registro, fkComponente) values" +
                                 "(?, ?, ?)";
                         template.update(sqlInsertAlertaRam, dataHoraColeta, usoRAM, 2);
                         podeRegistrarRam = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta RAM: " + usoRAM + "%" + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta RAM: " + usoRAM + "% - " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
+
+                        System.out.println("ALERTA JIRA RAM");
                     }
 
                 }
@@ -493,10 +508,9 @@ public class Alerta {
                         template.update(sqlInsertAlertaDisco, dataHoraColeta, usoDisco, 3);
                         podeRegistrarDisco = false;
 
-//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
-
-                        String msgJira = "Alerta DISCO: " + usoDisco + "%" + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta DISCO: " + usoDisco + "% - " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
+                        System.out.println("ALERTA JIRA DISCO");
                     }
 
                 }
@@ -512,7 +526,7 @@ public class Alerta {
                         podeRegistrarDown = false;
 
                         // Detalhe no Jira
-                        String msgJira = "Alerta REDE - VELOCIDADE DOWNLOAD: " + netDown + "Mbps" + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta REDE - VELOCIDADE DOWNLOAD: " + netDown + "Mbps" + "  -  " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -527,7 +541,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaRede, dataHoraColeta, codigoUp, fkComponenteRede);
                         podeRegistrarUp = false;
 
-                        String msgJira = "Alerta REDE - VELOCIDADE UPLOAD: " + netUp + "Mbps" + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta REDE - VELOCIDADE UPLOAD: " + netUp + "Mbps" + "  -  " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -542,7 +556,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaRede, dataHoraColeta, codigoIn, fkComponenteRede);
                         podeRegistrarIn = false;
 
-                        String msgJira = "Alerta REDE - ENTRADA DE PACOTES: " + pacotesIn + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta REDE - ENTRADA DE PACOTES: " + pacotesIn + "  -  " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -557,7 +571,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaRede, dataHoraColeta, codigoOut, fkComponenteRede);
                         podeRegistrarOut = false;
 
-                        String msgJira = "Alerta REDE - SAÍDA DE PACOTES: " + pacotesOut + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta REDE - SAÍDA DE PACOTES: " + pacotesOut + "  -  " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -572,7 +586,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaRede, dataHoraColeta, codigoConexao, fkComponenteRede);
                         podeRegistrarConexao = false;
 
-                        String msgJira = "Alerta REDE - CONEXÕES NA REDE: " + conexoes + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta REDE - CONEXÕES NA REDE: " + conexoes + "  -  " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -587,7 +601,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaRede, dataHoraColeta, codigoLatencia, fkComponenteRede);
                         podeRegistrarLatencia = false;
 
-                        String msgJira = "Alerta REDE - LATÊNCIA: " + latencia + "ms (milissegundos)" + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta REDE - LATÊNCIA: " + latencia + "ms (milissegundos)" + "  -  " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -602,7 +616,7 @@ public class Alerta {
                         template.update(sqlInsertAlertaRede, dataHoraColeta, codigoPerda, fkComponenteRede);
                         podeRegistrarPerdaPacote = false;
 
-                        String msgJira = "Alerta REDE - PERDA DE PACOTES: " + perdaPacote + "%" + "  -  " + dataHoraColeta;
+                        String msgJira = "Alerta REDE - PERDA DE PACOTES: " + perdaPacote + "%" + "  -  " + dataHoraColeta + " - Servidor: " + hostname;
                         abrirChamadoJira(msgJira);
                     }
 
@@ -611,55 +625,20 @@ public class Alerta {
                 linha = entrada.readLine();
             } // final do while
         } // final do try
-     catch (IOException e) {
-        e.printStackTrace();
-    } finally {
-        try {
-            entrada.close();
-        } catch (Exception ignore) {}
+        catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                entrada.close();
+            } catch (Exception ignore) {
+            }
         }
     }
-
-    //Não utilizaremos mais essa função
-
-//    public static void enviarAlertaSlack(double cpuPercent, double memPercent, double diskPercent, String
-//            timestamp, String hostname, Double limiteCpu, Double limiteRam, Double limiteDisco) {
-//
-//        if (cpuPercent > limiteCpu || memPercent > limiteRam || diskPercent > limiteDisco) {
-//            String alerta = String.format(
-//                    "⚠️ *Alerta de uso elevado detectado!*\n" +
-//                            "🕒 %s\n" +
-//                            "👤 Servidor: %s\n" +
-//                            "💻 CPU: %.2f%%\n" +
-//                            "🧠 RAM: %.2f%%\n" +
-//                            "💾 Disco: %.2f%%",
-//                    timestamp, hostname, cpuPercent, memPercent, diskPercent
-//            );
-//
-//            // Cria uma configuração personalizada sem listeners
-//            Slack slack = Slack.getInstance();
-//
-//            try {
-//                ChatPostMessageResponse response = slack.methods(SLACK_TOKEN).chatPostMessage(ChatPostMessageRequest.builder()
-//                        .channel(CHANNEL)
-//                        .text(alerta)
-//                        .build());
-//
-//                if (response.isOk()) {
-//                    System.out.println("Alerta enviado para o Slack.");
-//                } else {
-//                    System.out.println("Erro ao enviar alerta: " + response.getError());
-//                }
-//            } catch (IOException | SlackApiException e) {
-//                System.out.println("Exceção ao enviar alerta: " + e.getMessage());
-//            }
-//        }
-//    }
 
     public void abrirChamadoJira(String msgJira) {
         String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";
         String email = "vitalview.sptech@gmail.com";
-        String apiToken = "JIRA_TOKEN_AQUI";
+        String apiToken = "";
 
         String credentials = email + ":" + apiToken;
         String basicAuth = "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());

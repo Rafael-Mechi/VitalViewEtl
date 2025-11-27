@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class LeituraCsv {
@@ -247,11 +248,11 @@ public class LeituraCsv {
     }
 
 
-    public void leImportaArquivoCsv(String nomeArq, String hostname) {
+    public InputStream leImportaArquivoCsv(InputStream csvStream, String hostname) {
+
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         JdbcTemplate template = databaseConfiguration.getTemplate();
 
-        System.out.println("Pegando informações de hostname, limite do componente de cada componente e da Rede...");
         String sqlSelect =
                 "select s.hostname, c.limite, t.nome " +
                         "from componentes c " +
@@ -264,50 +265,37 @@ public class LeituraCsv {
                         "inner join servidores s on lr.fkServidor = s.idServidor " +
                         "inner join metrica r on r.idMetrica = lr.fkMetrica " +
                         "where s.hostname = ?";
+
         List<ServidorComponente> capturas =
                 template.query(sqlSelect,
                         new BeanPropertyRowMapper<>(ServidorComponente.class),
                         hostname, hostname
                 );
 
-        Reader arq = null;
-        BufferedReader entrada = null;
-        BufferedWriter saida = null;
+        try (
+                BufferedReader entrada = new BufferedReader(new InputStreamReader(csvStream, StandardCharsets.UTF_8));
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                BufferedWriter saida = new BufferedWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))
+        ) {
 
-        // Bloco try-catch para abrir o arquivo
-        try {
-            arq = new InputStreamReader(new FileInputStream(nomeArq), "UTF-8");
-            saida = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream("saida.csv"), "UTF-8"));
+            System.out.println("Lendo o csv e escrevendo a saída...");
 
-            entrada = new BufferedReader(arq);
+            String linha = entrada.readLine();
+            if (linha == null) {
+                throw new RuntimeException("CSV vazio");
+            }
 
-        } catch (IOException erro) {
-            System.out.println("Erro na abertura do arquivo");
-            System.exit(1);
-        }
-
-        System.out.println("Lendo o csv e escrevendo a saída");
-
-        try {
-            String[] registro;      // registro eh um vetor que armazenara cada parte da linha do arquivo
-            // readLine() eh usado   para ler uma linha inteira do arquivo
-            // Le a primeira linha do arquivo, que eh o cabecalho
-            String linha = entrada.readLine(); // linha eh a primeira linha do arquivo
+            // Cabeçalho
             String cabecalho = linha + ";alertaCpu;alertaRam;alertaDisco;alertaNetDown;alertaNetUp;alertaPacotesIn;alertaPacotesOut;alertaConexoes;alertaLatencia;alertaperdaPacote;saudeServidor;scoreSaudeServidor";
             saida.write(cabecalho);
             saida.newLine();
 
-            // separa cada item da linha usando o delimitador ;
-            registro = linha.split(";");
-
-            // Le a segunda linha do arquivo (1a linha de dados)
+            // Lê primeira linha de dados
             linha = entrada.readLine();
 
-            while (linha != null) { // enquanto nao chegou ao final do arquivo
-                registro = linha.split(";");
-                // converte de String para Integer usando Integer.valueOf
-                // Se fosse converter de String para int usa-se Integer.parseInt
+            while (linha != null) {
+                String[] registro = linha.split(";");
+
                 String dataDaColeta = registro[0];
                 String nomeDaMaquina = registro[1];
                 Double usoCPU = Double.valueOf(registro[2]);
@@ -330,15 +318,13 @@ public class LeituraCsv {
                 Double pacotesOut = Double.valueOf(registro[19]);
                 Integer conexoes = Integer.valueOf(registro[20]);
                 Double latencia = Double.valueOf(registro[21]);
-                Double perdaPacote;
 
-                if (registro.length > 22 && registro[22] != null && !registro[22].isEmpty()) {
-                    perdaPacote = Double.valueOf(registro[22]);
-                } else {
-                    perdaPacote = 0.0;
-                }
+                Double perdaPacote =
+                        (registro.length > 22 && !registro[22].isEmpty())
+                                ? Double.valueOf(registro[22])
+                                : 0.0;
+
                 Long uptime = Long.valueOf(registro[23]);
-
 
                 String alertaCpu = "não";
                 String alertaRam = "não";
@@ -353,71 +339,62 @@ public class LeituraCsv {
                 String saudeServidor = "Saudavel";
                 Integer scoreSaudeServidor = 100;
 
-
                 for (ServidorComponente c : capturas) {
-                    String tipoComponente = c.getNome();
+                    String tipo = c.getNome();
                     Double limite = c.getLimite();
 
-                    if (tipoComponente.equalsIgnoreCase("cpu") && usoCPU > limite) {
+                    if (tipo.equalsIgnoreCase("cpu") && usoCPU > limite) {
                         alertaCpu = "sim";
                         scoreSaudeServidor -= 30;
-                    } else if (tipoComponente.equalsIgnoreCase("memória") && usoRAM > limite) {
+                    } else if (tipo.equalsIgnoreCase("memória") && usoRAM > limite) {
                         alertaRam = "sim";
                         scoreSaudeServidor -= 30;
-                    } else if (tipoComponente.equalsIgnoreCase("disco") && usoDisco > limite) {
+                    } else if (tipo.equalsIgnoreCase("disco") && usoDisco > limite) {
                         alertaDisco = "sim";
                         scoreSaudeServidor -= 40;
-                    } else if (tipoComponente.equalsIgnoreCase("download") && netDown > limite) {
+                    } else if (tipo.equalsIgnoreCase("download") && netDown > limite) {
                         alertaNetDown = "sim";
-                    } else if (tipoComponente.equalsIgnoreCase("upload") && netUp > limite) {
+                    } else if (tipo.equalsIgnoreCase("upload") && netUp > limite) {
                         alertaNetUp = "sim";
-                    } else if (tipoComponente.equalsIgnoreCase("pacotein") && pacotesIn > (limite * 1000)) {
+                    } else if (tipo.equalsIgnoreCase("pacotein") && pacotesIn > limite * 1000) {
                         alertaPacotesIn = "sim";
-                    } else if (tipoComponente.equalsIgnoreCase("pacoteout") && pacotesOut > (limite * 1000)) {
+                    } else if (tipo.equalsIgnoreCase("pacoteout") && pacotesOut > limite * 1000) {
                         alertaPacotesOut = "sim";
-                    } else if (tipoComponente.equalsIgnoreCase("conexao") && conexoes > limite) {
+                    } else if (tipo.equalsIgnoreCase("conexao") && conexoes > limite) {
                         alertaConexoes = "sim";
-                    } else if (tipoComponente.equalsIgnoreCase("latencia") && latencia > limite) {
+                    } else if (tipo.equalsIgnoreCase("latencia") && latencia > limite) {
                         alertaLatencia = "sim";
-                    } else if (tipoComponente.equalsIgnoreCase("perdapacote") && perdaPacote > limite) {
+                    } else if (tipo.equalsIgnoreCase("perdapacote") && perdaPacote > limite) {
                         alertaperdaPacote = "sim";
                     }
                 }
 
-                if (scoreSaudeServidor == 100){
-                    saudeServidor = "Saudável";
-                } else if (scoreSaudeServidor == 60 || scoreSaudeServidor == 70) {
-                    saudeServidor = "Alerta";
-                } else if (scoreSaudeServidor == 30 || scoreSaudeServidor == 40 || scoreSaudeServidor == 0) {
-                    saudeServidor = "Crítico";
-                }
+                if (scoreSaudeServidor == 100) saudeServidor = "Saudável";
+                else if (scoreSaudeServidor == 60 || scoreSaudeServidor == 70) saudeServidor = "Alerta";
+                else if (scoreSaudeServidor <= 40) saudeServidor = "Crítico";
 
+                // Monta linha final
+                String novaLinha = linha + ";" + alertaCpu + ";" + alertaRam + ";" + alertaDisco + ";" +
+                        alertaNetDown + ";" + alertaNetUp + ";" + alertaPacotesIn + ";" + alertaPacotesOut +
+                        ";" + alertaConexoes + ";" + alertaLatencia + ";" + alertaperdaPacote + ";" +
+                        saudeServidor + ";" + scoreSaudeServidor;
 
-                // escreve a linha de dados + alertas
-                String novaLinha = linha + ";" + alertaCpu + ";" + alertaRam + ";" + alertaDisco + ";" + alertaNetDown + ";" + alertaNetUp + ";" + alertaPacotesIn + ";" + alertaPacotesOut + ";" + alertaConexoes + ";" + alertaLatencia + ";" + alertaperdaPacote + ";" + saudeServidor + ";" + scoreSaudeServidor;
                 saida.write(novaLinha);
                 saida.newLine();
 
-                // Le a proxima linha do arquivo
                 linha = entrada.readLine();
-            } // final do while
-        } // final do try
-        catch (IOException erro) {
-            System.out.println("Erro ao ler o arquivo");
-            erro.printStackTrace();
-        } finally {
-            try {
-                entrada.close();
-                arq.close();
-                saida.close();
-            } catch (IOException erro) {
-                System.out.println("Erro ao fechar o arquivo");
             }
+
+            saida.flush();
+
+            // Retorna CSV final em memória
+            return new ByteArrayInputStream(baos.toByteArray());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao processar CSV", e);
         }
-
-        System.out.println("Processo finalizado");
-
     }
+
 
     public void converterParaJson(String hostname) {
 

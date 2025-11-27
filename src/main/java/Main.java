@@ -16,7 +16,7 @@ import com.amazonaws.services.lambda.runtime.events.S3Event;
 
 public class Main implements RequestHandler<S3Event, String>{
     private final AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
-    private static final String DESTINATION_BUCKET = "trusted-2011";
+    private static final String DESTINATION_BUCKET = "bucket-trusted-vw";
 
     public static void main(String[] args) throws IOException {
 
@@ -84,6 +84,7 @@ public class Main implements RequestHandler<S3Event, String>{
 
             else if (sourceKey.contains("principal")) {
 
+
                 context.getLogger().log("Entrei no if que contém o principal!");
 
                 // Extrair o hostname do nome do arquivo
@@ -103,9 +104,12 @@ public class Main implements RequestHandler<S3Event, String>{
                 S3Object s3ObjectJson = s3Client.getObject(sourceBucket, sourceKey);
                 InputStream csvStreamJson = s3ObjectJson.getObjectContent();
 
+                LeituraCsv leitorCsv = new LeituraCsv();
+                InputStream csvTratado =  leitorCsv.leImportaArquivoCsv(csvStreamJson, sourceKey);
+
                 // Converter CSV to JSON
                 Conversor conversor = new Conversor();
-                String processosJson = conversor.converterParaJson(csvStreamJson);
+                String processosJson = conversor.converterParaJson(csvTratado);
 
                 // Enviar JSON para o bucket trusted
                 ObjectMetadata metadata = new ObjectMetadata();
@@ -119,6 +123,8 @@ public class Main implements RequestHandler<S3Event, String>{
                         new ByteArrayInputStream(processosJson.getBytes(StandardCharsets.UTF_8)),
                         metadata
                 );
+
+                context.getLogger().log("Processo principal finalizado com sucesso!");
 
 //              NÃO TA FUNCIONANDO, ENTÃO COMENTEI PRA NÃO DAR PROBLEMA
 //                context.getLogger().log("Gerando previsões de alertas para: " + hostname);
