@@ -25,7 +25,7 @@ public class Alerta {
     private Integer registro;
     private Integer fkComponente;
 
-    // Códigos das métricas de rede (1 a 7)
+    // Códigos das métricas de rede e disco
     private Integer codigoDown = 1;
     private Integer codigoUp = 2;
     private Integer codigoIn = 3;
@@ -33,8 +33,12 @@ public class Alerta {
     private Integer codigoConexao = 5;
     private Integer codigoLatencia = 6;
     private Integer codigoPerda = 7;
+    private Integer codigoTaxaLeitura = 8;
+    private Integer codigotaxaEscrita = 9;
+    private Integer codigoLatenciaDisco = 10;
 
-    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente, Integer codigoDown, Integer codigoUp, Integer codigoIn, Integer codigoOut, Integer codigoConexao, Integer codigoLatencia, Integer codigoPerda) {
+    //Construtores
+    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente, Integer codigoDown, Integer codigoUp, Integer codigoIn, Integer codigoOut, Integer codigoConexao, Integer codigoLatencia, Integer codigoPerda, Integer codigoTaxaLeitura, Integer codigotaxaEscrita, Integer codigoLatenciaDisco) {
         this.dataAlerta = dataAlerta;
         this.registro = registro;
         this.fkComponente = fkComponente;
@@ -45,17 +49,15 @@ public class Alerta {
         this.codigoConexao = codigoConexao;
         this.codigoLatencia = codigoLatencia;
         this.codigoPerda = codigoPerda;
-    }
-
-    public Alerta(LocalDateTime dataAlerta, Integer registro, Integer fkComponente) {
-        this.dataAlerta = dataAlerta;
-        this.registro = registro;
-        this.fkComponente = fkComponente;
+        this.codigoTaxaLeitura = codigoTaxaLeitura;
+        this.codigotaxaEscrita = codigotaxaEscrita;
+        this.codigoLatenciaDisco = codigoLatenciaDisco;
     }
 
     public Alerta() {
     }
 
+    //Getters e Setters
     public LocalDateTime getDataAlerta() {
         return dataAlerta;
     }
@@ -97,11 +99,31 @@ public class Alerta {
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
                 "where hostname = ? and t.nome = 'Memoria'";
 
+        //SELECTS DISCO
         String sqlSelectDisco = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = ? and t.nome = 'Disco'";
+                "where hostname = 'srv1' and t.nome = 'Disco'";
 
+        String sqlSelectTaxaleitura = "select lm.limite, m.metrica as nome " +
+                "from limiteMetrica lm " +
+                "inner join servidores s on lm.fkServidor = s.idServidor " +
+                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                "where s.hostname = 'srv1' and m.metrica = 'TaxaLeitura'";
+
+        String sqlSelectTaxaEscrita = "select lm.limite, m.metrica as nome " +
+                "from limiteMetrica lm " +
+                "inner join servidores s on lm.fkServidor = s.idServidor " +
+                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                "where s.hostname = 'srv1' and m.metrica = 'TaxaEscrita'";
+
+        String sqlSelectLatenciaDisco = "select lm.limite, m.metrica as nome " +
+                "from limiteMetrica lm " +
+                "inner join servidores s on lm.fkServidor = s.idServidor " +
+                "inner join metrica m on m.idMetrica = lm.fkMetrica " +
+                "where s.hostname = 'srv1' and m.metrica = 'LatenciaDisco'";
+
+        //SELECTS REDE
         String sqlSelectDown =
                 "select lr.limite, r.metrica as nome " +
                         "from limiteMetrica  lr " +
@@ -152,60 +174,26 @@ public class Alerta {
                         "where s.hostname = ? and r.metrica = 'PerdaPacote'";
 
 
-        List<ServidorComponente> capturaLimiteCpu =
-                template.query(sqlSelectCpu,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimiteRam =
-                template.query(sqlSelectRam,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimiteDisco =
-                template.query(sqlSelectDisco,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimiteDown =
-                template.query(sqlSelectDown,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimiteUpload =
-                template.query(sqlSelectUpload,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimitePacoteIn =
-                template.query(sqlSelectPacoteIn,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimitePacoteOut =
-                template.query(sqlSelectPacoteOut,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimiteConexao =
-                template.query(sqlSelectConexao,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimiteLatencia =
-                template.query(sqlSelectLatencia,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
-        List<ServidorComponente> capturaLimitePerdaPacote =
-                template.query(sqlSelectPerdaPacote,
-                        new BeanPropertyRowMapper<>(ServidorComponente.class),
-                        hostname
-                );
+        List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimiteRam = template.query(sqlSelectRam, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimiteDisco = template.query(sqlSelectDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteTaxaLeitura = template.query(sqlSelectTaxaleitura, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteTaxaEscrita = template.query(sqlSelectTaxaEscrita, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteLatenciaDisco = template.query(sqlSelectLatenciaDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteDown = template.query(sqlSelectDown, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimiteUpload = template.query(sqlSelectUpload, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimitePacoteIn = template.query(sqlSelectPacoteIn, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimitePacoteOut = template.query(sqlSelectPacoteOut, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimiteConexao = template.query(sqlSelectConexao, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimiteLatencia = template.query(sqlSelectLatencia, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimitePerdaPacote = template.query(sqlSelectPerdaPacote, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
 
         Double limiteCpu = capturaLimiteCpu.get(0).getLimite();
         Double limiteRam = capturaLimiteRam.get(0).getLimite();
         Double limiteDisco = capturaLimiteDisco.get(0).getLimite();
+        Double limiteTaxaLeitura = capturaLimiteTaxaLeitura.get(0).getLimite();
+        Double limiteTaxaEscrita = capturaLimiteTaxaEscrita.get(0).getLimite();
+        Double limiteLatenciaDisco = capturaLimiteLatenciaDisco.get(0).getLimite();
         Double limiteDown = capturaLimiteDown.get(0).getLimite();
         Double limiteUp = capturaLimiteUpload.get(0).getLimite();
         Double limiteIn = capturaLimitePacoteIn.get(0).getLimite();
@@ -217,6 +205,9 @@ public class Alerta {
         System.out.println(limiteCpu);
         System.out.println(limiteRam);
         System.out.println(limiteDisco);
+        System.out.println(limiteTaxaLeitura);
+        System.out.println(limiteTaxaEscrita);
+        System.out.println(limiteLatenciaDisco);
         System.out.println(limiteDown);
         System.out.println(limiteUp);
         System.out.println(limiteIn);
@@ -257,6 +248,10 @@ public class Alerta {
             Double primeiroRegistroCpu = Double.valueOf(registro[2]);
             Double primeiroRegistroRam = Double.valueOf(registro[3]);
             Double primeiroRegistroDisco = Double.valueOf(registro[6]);
+            Double primeiroRegistroTaxaLeitura = Double.valueOf(registro[10]);
+            Double primeiroRegistroTaxaEscrita = Double.valueOf(registro[11]);
+            Double primeiroRegistroLatenciaLeitura = Double.valueOf(registro[12]);
+            Double primeiroRegistroLatenciaEscrita = Double.valueOf(registro[13]);
             Double primeiroRegistroDown = Double.valueOf(registro[16]);
             Double primeiroRegistroUp = Double.valueOf(registro[17]);
             Long primeiroRegistroIn = Long.valueOf(registro[18]);
@@ -273,6 +268,9 @@ public class Alerta {
             Boolean podeRegistrarCpu = false;
             Boolean podeRegistrarRam = false;
             Boolean podeRegistrarDisco = false;
+            Boolean podeResgistrarTaxaLeitura = false;
+            Boolean podeResgistrarTaxaEscrita = false;
+            Boolean podeResgistrarLatenciaDisco = false;
             Boolean podeRegistrarDown = false;
             Boolean podeRegistrarUp = false;
             Boolean podeRegistrarIn = false;
@@ -284,6 +282,9 @@ public class Alerta {
             Integer contCpu = 0;
             Integer contRam = 0;
             Integer contDisco = 0;
+            Integer contTaxaLeitura = 0;
+            Integer contTaxaEscrita = 0;
+            Integer contLatenciaDisco = 0;
             Integer contDown = 0;
             Integer contUp = 0;
             Integer contIn = 0;
@@ -292,21 +293,34 @@ public class Alerta {
             Integer contLatencia = 0;
             Integer contPerdaPacote = 0;
 
-            // verificando se o uso de cpu da primeira linha ultrapassa o limite
+            // verificando se o uso de CPU da primeira linha ultrapassa o limite
             if (primeiroRegistroCpu > limiteCpu) {
                 contCpu++;
             }
 
-            // ram...
+            // RAM
             if (primeiroRegistroRam > limiteRam) {
                 contRam++;
             }
 
-            // disco...
+            // DISCO
             if (primeiroRegistroDisco > limiteDisco) {
                 contDisco++;
             }
 
+            if (primeiroRegistroTaxaLeitura > limiteTaxaLeitura) {
+                contTaxaLeitura++;
+            }
+
+            if (primeiroRegistroLatenciaEscrita > limiteTaxaEscrita) {
+                contTaxaEscrita++;
+            }
+
+            if(primeiroRegistroLatenciaEscrita > limiteLatenciaDisco || primeiroRegistroLatenciaLeitura > limiteLatenciaDisco) {
+                contLatenciaDisco++;
+            }
+
+            //REDE
             if (primeiroRegistroDown > limiteDown) {
                 contDown++;
             }
@@ -344,6 +358,10 @@ public class Alerta {
                 Double usoCPU = Double.valueOf(registro[2]);
                 Double usoRAM = Double.valueOf(registro[3]);
                 Double usoDisco = Double.valueOf(registro[6]);
+                Double taxaLeitura = Double.valueOf(registro[9]);
+                Double taxaEscrita = Double.valueOf(registro[10]);
+                Double latenciaDiscoLeitura = Double.valueOf(registro[11]);
+                Double latenciaDiscoEscrita = Double.valueOf(registro[12]);
                 Double netDown = Double.valueOf(registro[16]);
                 Double netUp = Double.valueOf(registro[17]);
                 Long pacotesIn = Long.valueOf(registro[18]);
@@ -375,6 +393,24 @@ public class Alerta {
                     contDisco = 0;
                 } else {
                     contDisco++;
+                }
+
+                if (taxaLeitura < limiteTaxaLeitura) {
+                    contTaxaEscrita = 0;
+                } else {
+                    contTaxaLeitura++;
+                }
+
+                if (taxaEscrita < limiteTaxaEscrita) {
+                    contTaxaEscrita = 0;
+                } else {
+                    contTaxaEscrita++;
+                }
+
+                if (latenciaDiscoEscrita < limiteLatenciaDisco && latenciaDiscoLeitura < limiteLatenciaDisco) {
+                    contLatenciaDisco = 0;
+                } else {
+                    contLatenciaDisco++;
                 }
 
                 if (netDown < limiteDown) {
@@ -432,6 +468,18 @@ public class Alerta {
 
                 if (contDisco == 3) {
                     podeRegistrarDisco = true;
+                }
+
+                if (contTaxaLeitura == 3) {
+                    podeResgistrarTaxaLeitura = true;
+                }
+
+                if (contTaxaEscrita == 3) {
+                    podeResgistrarTaxaEscrita = true;
+                }
+
+                if (contLatenciaDisco == 3) {
+                    podeResgistrarTaxaEscrita = true;
                 }
 
                 if (contDown == 3) {
@@ -498,6 +546,7 @@ public class Alerta {
 
                 }
 
+                //ALERTAS DISCO
                 for (ServidorComponente sc : capturaLimiteDisco) {
                     String tipoComponente = sc.getNome();
                     Double limite = sc.getLimite();
@@ -508,13 +557,60 @@ public class Alerta {
                         template.update(sqlInsertAlertaDisco, dataHoraColeta, usoDisco, 3);
                         podeRegistrarDisco = false;
 
-                        String msgJira = "Alerta DISCO: " + usoDisco + "% - " + dataHoraColeta + " - Servidor: " + hostname;
+//                        enviarAlertaSlack(usoCPU, usoRAM, usoDisco, dataHoraColeta, nomeDaMaquina, limiteCpu, limiteRam, limiteDisco);
+
+                        String msgJira = "Alerta DISCO: " + usoDisco + "%" + "  -  " + dataHoraColeta + " - Servidor: " + hostname;;
                         abrirChamadoJira(msgJira);
-                        System.out.println("ALERTA JIRA DISCO");
+                    }
+                }
+
+                for (ServidorComponente sc : capturaLimiteTaxaLeitura) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("taxaLeitura") && taxaLeitura > limite && podeResgistrarTaxaLeitura && contTaxaLeitura >= 3) {
+                        String sqlInsertAlertaTaxaLeitura = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaTaxaLeitura, dataHoraColeta, codigoTaxaLeitura, fkComponenteRede);
+                        podeResgistrarTaxaLeitura = false;
+
+                        // Detalhe no Jira
+                        String msgJira = "Alerta DISCO - TAXA LEITURA: " + taxaLeitura + " MB/s - " + dataHoraColeta + " - Servidor: " + hostname;
+                        abrirChamadoJira(msgJira);
                     }
 
                 }
 
+                for (ServidorComponente sc : capturaLimiteTaxaEscrita) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("taxaEscrita") && taxaEscrita > limite && podeResgistrarTaxaEscrita && contTaxaEscrita >= 3) {
+                        String sqlInsertAlertaTaxaEscrita = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaTaxaEscrita, dataHoraColeta, codigotaxaEscrita, fkComponenteRede);
+                        podeResgistrarTaxaEscrita = false;
+
+                        // Detalhe no Jira
+                        String msgJira = "Alerta DISCO - TAXA ESCRITA: " + taxaEscrita + " MB/s - " + dataHoraColeta + " - Servidor: " + hostname;
+                        abrirChamadoJira(msgJira);
+                    }
+                }
+
+                for (ServidorComponente sc : capturaLimiteLatenciaDisco) {
+                    String tipoComponente = sc.getNome();
+                    Double limite = sc.getLimite();
+
+                    if (tipoComponente.equalsIgnoreCase("latenciaDisco") && latenciaDiscoLeitura > limite && latenciaDiscoEscrita > limite && podeResgistrarLatenciaDisco && contLatenciaDisco >= 3) {
+                        String sqlInsertAlertaLatenciaDisco = "insert into alerta (data_alerta, registro, fkComponente) values (?, ?, ?)";
+                        template.update(sqlInsertAlertaLatenciaDisco, dataHoraColeta, codigoLatenciaDisco, fkComponenteRede);
+                        podeResgistrarLatenciaDisco = false;
+
+                        // Detalhe no Jira
+                        String msgJira = "Alerta LATÊNCIA DISCO - Escrita: " + latenciaDiscoEscrita + " MB/s - Leitura: " + latenciaDiscoLeitura + " MB/s - " + dataHoraColeta + " - Servidor: " + hostname;
+                        abrirChamadoJira(msgJira);
+                    }
+                }
+
+                //ALERTAS REDE
                 for (ServidorComponente sc : capturaLimiteDown) {
                     String tipoComponente = sc.getNome();
                     Double limite = sc.getLimite();
