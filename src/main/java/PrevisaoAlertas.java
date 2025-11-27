@@ -61,7 +61,6 @@ public class PrevisaoAlertas {
                 a.data_alerta,
                 a.registro,
                 s.hostname,
-                s.nomeServidor,
                 COALESCE(tc.nome, 'Rede') as componente,
                 CASE 
                     WHEN tc.nome IS NULL THEN 
@@ -91,10 +90,9 @@ public class PrevisaoAlertas {
 
         for (Map<String, Object> row : rows) {
             DadoAlerta dado = new DadoAlerta();
-            dado.dataAlerta = ((java.sql.Timestamp) row.get("data_alerta")).toLocalDateTime();
+            dado.dataAlerta = ((LocalDateTime) row.get("data_alerta"));
             dado.registro = ((Number) row.get("registro")).doubleValue();
             dado.hostname = (String) row.get("hostname");
-            dado.nomeServidor = (String) row.get("nomeServidor");
             dado.componente = (String) row.get("componente");
             dado.metricaEspecifica = (String) row.get("metrica_especifica");
             dados.add(dado);
@@ -108,7 +106,7 @@ public class PrevisaoAlertas {
 
         for (DadoAlerta dado : historico) {
             agrupamento
-                    .computeIfAbsent(dado.nomeServidor, k -> new HashMap<>())
+                    .computeIfAbsent(dado.hostname, k -> new HashMap<>())
                     .computeIfAbsent(dado.metricaEspecifica, k -> new ArrayList<>())
                     .add(dado);
         }
@@ -250,7 +248,6 @@ public class PrevisaoAlertas {
         LocalDateTime dataAlerta;
         Double registro;
         String hostname;
-        String nomeServidor;
         String componente;
         String metricaEspecifica;
     }

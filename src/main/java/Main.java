@@ -124,34 +124,23 @@ public class Main implements RequestHandler<S3Event, String>{
                         metadata
                 );
 
-                context.getLogger().log("Processo principal finalizado com sucesso!");
+                PrevisaoAlertas previsaoAlertas = new PrevisaoAlertas();
+                String previsoesJson = previsaoAlertas.gerarPrevisoes(hostname);
 
-//              NÃO TA FUNCIONANDO, ENTÃO COMENTEI PRA NÃO DAR PROBLEMA
-//                context.getLogger().log("Gerando previsões de alertas para: " + hostname);
-//
-//                try {
-//                    PrevisaoAlertas previsaoAlertas = new PrevisaoAlertas();
-//                    String previsoesJson = previsaoAlertas.gerarPrevisoes(hostname);
-//
-//                    // Enviar JSON para o bucket trusted
-//                    ObjectMetadata metadataPrevisoes = new ObjectMetadata();
-//                    metadataPrevisoes.setContentType("application/json");
-//
-//                    String previsaoKey = sourceKey.replace("_principal.csv", "_previsoes.json");
-//
-//                    s3Client.putObject(
-//                            DESTINATION_BUCKET,
-//                            previsaoKey,
-//                            new ByteArrayInputStream(previsoesJson.getBytes(StandardCharsets.UTF_8)),
-//                            metadataPrevisoes
-//                    );
-//
-//                    context.getLogger().log("Previsões enviadas com sucesso: " + previsaoKey);
-//
-//                } catch (Exception ex) {
-//                    context.getLogger().log("ERRO ao gerar previsões: " + ex.getMessage());
-//                    ex.printStackTrace();
-//                }
+                // Enviar JSON para o bucket trusted
+                ObjectMetadata metadataPrevisoes = new ObjectMetadata();
+                metadataPrevisoes.setContentType("application/json");
+
+                String previsaoKey = sourceKey.replace("_principal.csv", "_previsoes.json");
+
+                s3Client.putObject(
+                        DESTINATION_BUCKET,
+                        previsaoKey,
+                        new ByteArrayInputStream(previsoesJson.getBytes(StandardCharsets.UTF_8)),
+                        metadataPrevisoes
+                );
+
+                context.getLogger().log("Previsões enviadas com sucesso: " + previsaoKey);
 
                 context.getLogger().log("Processo principal finalizado com sucesso!");
             }
