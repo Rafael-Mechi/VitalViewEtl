@@ -104,12 +104,9 @@ public class Main implements RequestHandler<S3Event, String>{
                 S3Object s3ObjectJson = s3Client.getObject(sourceBucket, sourceKey);
                 InputStream csvStreamJson = s3ObjectJson.getObjectContent();
 
-                LeituraCsv leitorCsv = new LeituraCsv();
-                InputStream csvTratado =  leitorCsv.leImportaArquivoCsv(csvStreamJson, sourceKey);
-
                 // Converter CSV to JSON
                 Conversor conversor = new Conversor();
-                String processosJson = conversor.converterParaJson(csvTratado);
+                String dadosJson = conversor.converterParaJson(csvStreamJson);
 
                 // Enviar JSON para o bucket trusted
                 ObjectMetadata metadata = new ObjectMetadata();
@@ -120,7 +117,7 @@ public class Main implements RequestHandler<S3Event, String>{
                 s3Client.putObject(
                         DESTINATION_BUCKET,
                         sourceKey.replace(".csv", ".json"),
-                        new ByteArrayInputStream(processosJson.getBytes(StandardCharsets.UTF_8)),
+                        new ByteArrayInputStream(dadosJson.getBytes(StandardCharsets.UTF_8)),
                         metadata
                 );
 
