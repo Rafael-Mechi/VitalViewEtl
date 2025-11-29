@@ -103,25 +103,25 @@ public class Alerta {
         String sqlSelectDisco = "select c.limite, t.nome from componentes c\n" +
                 "inner join servidores s on c.fkServidor = s.idServidor\n" +
                 "inner join tipoComponente t on t.idTipo = c.fkTipo\n" +
-                "where hostname = 'srv1' and t.nome = 'Disco'";
+                "where hostname = ? and t.nome = 'Disco'";
 
         String sqlSelectTaxaleitura = "select lm.limite, m.metrica as nome " +
                 "from limiteMetrica lm " +
                 "inner join servidores s on lm.fkServidor = s.idServidor " +
                 "inner join metrica m on m.idMetrica = lm.fkMetrica " +
-                "where s.hostname = 'srv1' and m.metrica = 'TaxaLeitura'";
+                "where s.hostname = ? and m.metrica = 'TaxaLeitura'";
 
         String sqlSelectTaxaEscrita = "select lm.limite, m.metrica as nome " +
                 "from limiteMetrica lm " +
                 "inner join servidores s on lm.fkServidor = s.idServidor " +
                 "inner join metrica m on m.idMetrica = lm.fkMetrica " +
-                "where s.hostname = 'srv1' and m.metrica = 'TaxaEscrita'";
+                "where s.hostname = ? and m.metrica = 'TaxaEscrita'";
 
         String sqlSelectLatenciaDisco = "select lm.limite, m.metrica as nome " +
                 "from limiteMetrica lm " +
                 "inner join servidores s on lm.fkServidor = s.idServidor " +
                 "inner join metrica m on m.idMetrica = lm.fkMetrica " +
-                "where s.hostname = 'srv1' and m.metrica = 'LatenciaDisco'";
+                "where s.hostname = ? and m.metrica = 'LatenciaDisco'";
 
         //SELECTS REDE
         String sqlSelectDown =
@@ -176,10 +176,10 @@ public class Alerta {
 
         List<ServidorComponente> capturaLimiteCpu = template.query(sqlSelectCpu, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
         List<ServidorComponente> capturaLimiteRam = template.query(sqlSelectRam, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
-        List<ServidorComponente> capturaLimiteDisco = template.query(sqlSelectDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteTaxaLeitura = template.query(sqlSelectTaxaleitura, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteTaxaEscrita = template.query(sqlSelectTaxaEscrita, new BeanPropertyRowMapper<>(ServidorComponente.class));
-        List<ServidorComponente> capturaLimiteLatenciaDisco = template.query(sqlSelectLatenciaDisco, new BeanPropertyRowMapper<>(ServidorComponente.class));
+        List<ServidorComponente> capturaLimiteDisco = template.query(sqlSelectDisco, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimiteTaxaLeitura = template.query(sqlSelectTaxaleitura, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimiteTaxaEscrita = template.query(sqlSelectTaxaEscrita, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
+        List<ServidorComponente> capturaLimiteLatenciaDisco = template.query(sqlSelectLatenciaDisco, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
         List<ServidorComponente> capturaLimiteDown = template.query(sqlSelectDown, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
         List<ServidorComponente> capturaLimiteUpload = template.query(sqlSelectUpload, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
         List<ServidorComponente> capturaLimitePacoteIn = template.query(sqlSelectPacoteIn, new BeanPropertyRowMapper<>(ServidorComponente.class), hostname);
@@ -734,7 +734,7 @@ public class Alerta {
     public void abrirChamadoJira(String msgJira) {
         String jiraUrl = "https://vitalviewsptech.atlassian.net/rest/api/3/issue";
         String email = "vitalview.sptech@gmail.com";
-        String apiToken = "";
+        String apiToken = "API-AQUI";
 
         String credentials = email + ":" + apiToken;
         String basicAuth = "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
