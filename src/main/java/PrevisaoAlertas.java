@@ -198,24 +198,35 @@ public class PrevisaoAlertas {
         double mediaY = somaY / n;
 
         // Coeficiente angular
-        double b = (somaXY - n * mediaX * mediaY) / (somaX2 - n * mediaX * mediaX);
+        double denominadorB = somaX2 - n * mediaX * mediaX;
+        double b = 0;
+
+        if (Math.abs(denominadorB) > 1e-10) {
+            b = (somaXY - n * mediaX * mediaY) / denominadorB;
+        }
 
         // Coeficiente linear
         double a = mediaY - b * mediaX;
 
         // Calcular R²
         double sqTotal = somaY2 - n * mediaY * mediaY;
-        double sqRes = 0;
-        for (int i = 0; i < n; i++) {
-            double yPred = a + b * x.get(i);
-            sqRes += Math.pow(y.get(i) - yPred, 2);
+        double r2 = 0.5; // Valor padrão p/ quando não é possível calcular
+
+        if (Math.abs(sqTotal) > 1e-10) {
+            double sqRes = 0;
+            for (int i = 0; i < n; i++) {
+                double yPred = a + b * x.get(i);
+                sqRes += Math.pow(y.get(i) - yPred, 2);
+            }
+            r2 = 1 - (sqRes / sqTotal);
+            // Garantir que R² fique entre 0 e 1
+            r2 = Math.max(0, Math.min(1, r2));
         }
-        double r2 = 1 - (sqRes / sqTotal);
 
         RegressaoLinear resultado = new RegressaoLinear();
         resultado.a = a;
         resultado.b = b;
-        resultado.r2 = Math.max(0, Math.min(1, r2)); // entre 0 e 1
+        resultado.r2 = r2;
 
         return resultado;
     }
