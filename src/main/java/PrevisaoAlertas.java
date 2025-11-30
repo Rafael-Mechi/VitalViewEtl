@@ -174,7 +174,7 @@ public class PrevisaoAlertas {
         resultado.diaRisco = proximoDiaRisco.toString();
         resultado.periodo = "Próximos 7 dias";
         resultado.alertasPrevistos = Math.max(0, (int) Math.round(previsaoAlertas));
-        resultado.probabilidade = String.format("%.1f%", probabilidade);
+        resultado.probabilidade = String.format("%.1f%%", probabilidade);
         resultado.tendencia = tendencia;
         resultado.nivelRisco = nivelRisco;
 
